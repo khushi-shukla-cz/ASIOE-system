@@ -1,0 +1,263 @@
+[
+  {
+    "course_id": "py_everybody",
+    "title": "Python for Everybody Specialization",
+    "description": "Complete Python programming from scratch with Dr. Chuck. Covers data structures, web data, databases.",
+    "provider": "Coursera / University of Michigan",
+    "url": "https://www.coursera.org/specializations/python",
+    "domain": "technical",
+    "difficulty_level": "beginner",
+    "estimated_hours": 40,
+    "skills_covered": [
+      "Python",
+      "Programming Fundamentals",
+      "Data Structures & Algorithms",
+      "SQL"
+    ]
+  },
+  {
+    "course_id": "py_advanced",
+    "title": "Advanced Python Programming",
+    "description": "Advanced Python: decorators, generators, async, metaclasses, performance optimization.",
+    "provider": "Udemy",
+    "url": "https://www.udemy.com/course/advanced-python/",
+    "domain": "technical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 30,
+    "skills_covered": [
+      "Python",
+      "Object-Oriented Programming",
+      "Software Design & Architecture"
+    ]
+  },
+  {
+    "course_id": "ml_ng",
+    "title": "Machine Learning Specialization",
+    "description": "Andrew Ng's definitive ML course. Supervised, unsupervised, and reinforcement learning.",
+    "provider": "Coursera / DeepLearning.AI",
+    "url": "https://www.coursera.org/specializations/machine-learning-introduction",
+    "domain": "analytical",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 90,
+    "skills_covered": [
+      "Machine Learning",
+      "Python",
+      "Statistics",
+      "Pandas & NumPy"
+    ]
+  },
+  {
+    "course_id": "dl_ng",
+    "title": "Deep Learning Specialization",
+    "description": "5-course deep learning specialization covering CNNs, RNNs, and practical deployment.",
+    "provider": "Coursera / DeepLearning.AI",
+    "url": "https://www.coursera.org/specializations/deep-learning",
+    "domain": "analytical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 120,
+    "skills_covered": [
+      "Deep Learning",
+      "Neural Networks",
+      "Natural Language Processing",
+      "Computer Vision"
+    ]
+  },
+  {
+    "course_id": "mlops_course",
+    "title": "Machine Learning Engineering for Production (MLOps)",
+    "description": "Deploy scalable ML systems with proper monitoring and CI/CD.",
+    "provider": "Coursera / DeepLearning.AI",
+    "url": "https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops",
+    "domain": "technical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 80,
+    "skills_covered": [
+      "MLOps",
+      "Docker",
+      "Cloud Computing",
+      "Machine Learning"
+    ]
+  },
+  {
+    "course_id": "sql_mode",
+    "title": "SQL for Data Analysis",
+    "description": "SQL from basics to advanced window functions, CTEs, and query optimization.",
+    "provider": "Mode Analytics",
+    "url": "https://mode.com/sql-tutorial/",
+    "domain": "technical",
+    "difficulty_level": "beginner",
+    "estimated_hours": 20,
+    "skills_covered": [
+      "SQL",
+      "Data Fundamentals",
+      "Data Analysis"
+    ]
+  },
+  {
+    "course_id": "stats_course",
+    "title": "Statistics with Python Specialization",
+    "description": "Statistical analysis, inference, and visualization using Python.",
+    "provider": "Coursera / University of Michigan",
+    "url": "https://www.coursera.org/specializations/statistics-with-python",
+    "domain": "analytical",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 60,
+    "skills_covered": [
+      "Statistics",
+      "Python",
+      "Data Analysis",
+      "Pandas & NumPy"
+    ]
+  },
+  {
+    "course_id": "data_engineering",
+    "title": "Data Engineering, Big Data & ML on GCP",
+    "description": "End-to-end data engineering pipelines on Google Cloud Platform.",
+    "provider": "Coursera / Google",
+    "url": "https://www.coursera.org/specializations/gcp-data-machine-learning",
+    "domain": "technical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 80,
+    "skills_covered": [
+      "Data Engineering",
+      "Apache Spark",
+      "Cloud Computing",
+      "SQL"
+    ]
+  },
+  {
+    "course_id": "aws_clf",
+    "title": "AWS Certified Cloud Practitioner",
+    "description": "Foundational AWS cloud concepts, services, and pricing.",
+    "provider": "AWS Training",
+    "url": "https://aws.amazon.com/certification/certified-cloud-practitioner/",
+    "domain": "technical",
+    "difficulty_level": "beginner",
+    "estimated_hours": 30,
+    "skills_covered": [
+      "Amazon Web Services (AWS)",
+      "Cloud Computing",
+      "Networking Fundamentals"
+    ]
+  },
+  {
+    "course_id": "docker_k8s",
+    "title": "Docker & Kubernetes: The Practical Guide",
+    "description": "Complete containerization guide from Docker basics to Kubernetes production deployments.",
+    "provider": "Udemy",
+    "url": "https://www.udemy.com/course/docker-kubernetes-the-practical-guide/",
+    "domain": "technical",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 50,
+    "skills_covered": [
+      "Docker",
+      "Kubernetes",
+      "Linux",
+      "CI/CD Pipelines"
+    ]
+  },
+  {
+    "course_id": "dsa_course",
+    "title": "Algorithms Specialization",
+    "description": "Stanford's definitive algorithms course covering divide & conquer, graph algorithms, NP-completeness.",
+    "provider": "Coursera / Stanford",
+    "url": "https://www.coursera.org/specializations/algorithms",
+    "domain": "technical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 80,
+    "skills_covered": [
+      "Data Structures & Algorithms",
+      "Problem Solving",
+      "Mathematics"
+    ]
+  },
+  {
+    "course_id": "system_design",
+    "title": "Grokking System Design Interview",
+    "description": "Comprehensive system design for scalable distributed systems.",
+    "provider": "Educative",
+    "url": "https://www.educative.io/courses/grokking-modern-system-design-interview",
+    "domain": "technical",
+    "difficulty_level": "advanced",
+    "estimated_hours": 40,
+    "skills_covered": [
+      "Software Design & Architecture",
+      "Cloud Computing",
+      "API Design & REST"
+    ]
+  },
+  {
+    "course_id": "leadership_wharton",
+    "title": "Leadership and Management Specialization",
+    "description": "Wharton's executive program on leadership, communication, and organizational management.",
+    "provider": "Coursera / Wharton",
+    "url": "https://www.coursera.org/specializations/leadership-management-wharton",
+    "domain": "leadership",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 30,
+    "skills_covered": [
+      "Team Leadership",
+      "Communication Skills",
+      "Project Management"
+    ]
+  },
+  {
+    "course_id": "agile_cert",
+    "title": "Agile with Atlassian Jira",
+    "description": "Practical Agile methodology and Scrum framework using Jira.",
+    "provider": "Coursera / Atlassian",
+    "url": "https://www.coursera.org/learn/agile-atlassian-jira",
+    "domain": "leadership",
+    "difficulty_level": "beginner",
+    "estimated_hours": 15,
+    "skills_covered": [
+      "Agile & Scrum",
+      "Project Management"
+    ]
+  },
+  {
+    "course_id": "financial_mkts",
+    "title": "Financial Markets",
+    "description": "Yale's comprehensive course on finance, risk management, and investment.",
+    "provider": "Coursera / Yale",
+    "url": "https://www.coursera.org/learn/financial-markets-global",
+    "domain": "domain_specific",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 33,
+    "skills_covered": [
+      "Financial Analysis",
+      "Risk Management",
+      "Statistics"
+    ]
+  },
+  {
+    "course_id": "risk_mgmt",
+    "title": "Enterprise Risk Management",
+    "description": "Frameworks for identifying, measuring, and managing enterprise-level risks.",
+    "provider": "Coursera / NYU",
+    "url": "https://www.coursera.org/learn/enterprise-risk-management",
+    "domain": "domain_specific",
+    "difficulty_level": "advanced",
+    "estimated_hours": 25,
+    "skills_covered": [
+      "Risk Management",
+      "Financial Analysis",
+      "Regulatory Compliance"
+    ]
+  },
+  {
+    "course_id": "cybersec_ibm",
+    "title": "IBM Cybersecurity Analyst Professional Certificate",
+    "description": "Full cybersecurity analyst training: threat intelligence, SIEM, incident response.",
+    "provider": "Coursera / IBM",
+    "url": "https://www.coursera.org/professional-certificates/ibm-cybersecurity-analyst",
+    "domain": "technical",
+    "difficulty_level": "intermediate",
+    "estimated_hours": 120,
+    "skills_covered": [
+      "Cybersecurity",
+      "Networking Fundamentals",
+      "Linux"
+    ]
+  }
+]
