@@ -1,0 +1,47 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.pkl
+*.bin
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Data (large files)
+backend/data/raw/
+backend/data/processed/*.pkl
+backend/data/processed/*.bin
+
+# Uploads
+/tmp/asioe_uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Private local notes
+PLACEMENT_REFERENCE.md
+PLACEMENT_PREP_MASTER_NOTE.md
+PLACEMENT_TECH_INTERVIEW_CHEATSHEET.md
+summary.md
+PLACEMENT_TOP_TIER_TRACKER.md

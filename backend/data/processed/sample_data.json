@@ -1,0 +1,43 @@
+{
+  "resume": {
+    "filename": "sample_resume.json",
+    "candidate_name": "Alex Johnson",
+    "current_role": "Junior Software Engineer",
+    "years_of_experience": 2,
+    "education_level": "bachelor",
+    "skills": [
+      {
+        "name": "Python",
+        "proficiency_level": "intermediate",
+        "proficiency_score": 0.6,
+        "domain": "technical",
+        "years_used": 2.0
+      },
+      {
+        "name": "SQL",
+        "proficiency_level": "beginner",
+        "proficiency_score": 0.3,
+        "domain": "technical",
+        "years_used": 1.0
+      },
+      {
+        "name": "Git",
+        "proficiency_level": "intermediate",
+        "proficiency_score": 0.6,
+        "domain": "technical",
+        "years_used": 2.0
+      },
+      {
+        "name": "HTML/CSS",
+        "proficiency_level": "intermediate",
+        "proficiency_score": 0.6,
+        "domain": "technical",
+        "years_used": 2.0
+      }
+    ]
+  },
+  "jd": {
+    "filename": "sample_jd.txt",
+    "content": "\nSenior Data Scientist \u2014 Financial Services\n\nWe are seeking an experienced Senior Data Scientist to join our risk analytics team.\n\nRequired Skills:\n- Python (Advanced) \u2014 4+ years\n- Machine Learning \u2014 3+ years  \n- SQL (Advanced) \u2014 3+ years\n- Statistics and Probability \u2014 3+ years\n- Data Analysis \u2014 3+ years\n- Cloud Computing (AWS preferred) \u2014 2+ years\n- MLOps and model deployment \u2014 2+ years\n\nPreferred Skills:\n- Deep Learning\n- Natural Language Processing\n- Apache Spark\n- Docker/Kubernetes\n- Financial Analysis\n\nMinimum 5 years experience. Masters or PhD in quantitative field preferred.\n"
+  }
+}
