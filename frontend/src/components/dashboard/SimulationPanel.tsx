@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Play, Sliders, Clock, Layers, Zap, Target } from 'lucide-react'
+import { Loader2, Play, Sliders, Clock, Layers, Zap, Target, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LearningPathResult } from '@/types'
 import { runSimulation } from '@/utils/api'
@@ -18,8 +18,15 @@ interface Props {
 }
 
 export default function SimulationPanel({ sessionId, originalPath }: Props) {
-  const { simulationResult, setSimulationResult, setSimulating, isSimulating } = useStore()
+  const {
+    simulationResult,
+    setSimulationResult,
+    clearSimulationResult,
+    setSimulating,
+    isSimulating,
+  } = useStore()
   const [weeks, setWeeks] = useState(originalPath.total_weeks)
+  const [maxModules, setMaxModules] = useState(originalPath.total_modules)
   const [priorityDomains, setPriorityDomains] = useState<string[]>([])
 
   const displayPath = simulationResult || originalPath
@@ -36,14 +43,24 @@ export default function SimulationPanel({ sessionId, originalPath }: Props) {
       const result = await runSimulation({
         sessionId,
         timeConstraintWeeks: Math.round(weeks),
+        maxModules: Math.max(5, Math.round(maxModules)),
         priorityDomains,
       })
       setSimulationResult(result.learning_path)
       toast.success(`Recomputed: ${result.learning_path?.total_modules} modules in ${result.learning_path?.total_weeks?.toFixed(1)}w`)
     } catch (err: any) {
       toast.error(err.message || 'Simulation failed')
+    } finally {
       setSimulating(false)
     }
+  }
+
+  const handleReset = () => {
+    clearSimulationResult()
+    setWeeks(originalPath.total_weeks)
+    setMaxModules(originalPath.total_modules)
+    setPriorityDomains([])
+    toast.success('Reverted to original learning path')
   }
 
   const delta = simulationResult
@@ -92,6 +109,29 @@ export default function SimulationPanel({ sessionId, originalPath }: Props) {
 
         {/* Priority domains */}
         <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-medium text-slate-600 uppercase tracking-wide block">
+              Max Modules
+            </label>
+            <span className="text-sm font-semibold text-slate-800">
+              {Math.round(maxModules)}
+            </span>
+          </div>
+          <input
+            type="range"
+            min={5}
+            max={50}
+            step={1}
+            value={maxModules}
+            onChange={e => setMaxModules(Number(e.target.value))}
+            className="w-full h-2 rounded-full appearance-none bg-slate-200 accent-slate-700 cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-slate-400 mt-1 mb-5">
+            <span>5 modules</span>
+            <span>25 modules</span>
+            <span>50 modules</span>
+          </div>
+
           <label className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-2 block">
             Priority Domains (optional)
           </label>
@@ -126,6 +166,15 @@ export default function SimulationPanel({ sessionId, originalPath }: Props) {
             <><Play size={16} /> Run Simulation</>
           )}
         </button>
+
+        {simulationResult && (
+          <button
+            onClick={handleReset}
+            className="btn-ghost w-full justify-center py-3 mt-2"
+          >
+            <RotateCcw size={16} /> Reset To Original
+          </button>
+        )}
       </div>
 
       {/* Delta comparison */}

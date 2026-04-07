@@ -237,6 +237,7 @@ class AnalysisCompleteResponse(BaseModel):
 class SimulationRequest(BaseModel):
     session_id: str
     time_constraint_weeks: int = Field(..., ge=1, le=104)
+    max_modules: Optional[int] = Field(default=None, ge=5, le=50)
     priority_domains: List[str] = []
     exclude_module_ids: List[str] = []
 

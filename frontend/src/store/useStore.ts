@@ -28,6 +28,7 @@ interface AppState {
   setResult: (result: AnalysisResult) => void
   setActiveTab: (tab: AppState['activeTab']) => void
   setSimulationResult: (r: AnalysisResult['learning_path']) => void
+  clearSimulationResult: () => void
   setSimulating: (v: boolean) => void
   setSelectedModule: (id: string | null) => void
   reset: () => void
@@ -54,9 +55,16 @@ export const useStore = create<AppState>()(
       setSessionId: (id) => set({ sessionId: id }),
       setAnalyzing: (v) => set({ isAnalyzing: v }),
       setProgress: (pct, label) => set({ analysisProgress: pct, progressLabel: label || '' }),
-      setResult: (result) => set({ result, isAnalyzing: false, analysisProgress: 100 }),
+      setResult: (result) => set({
+        result,
+        isAnalyzing: false,
+        analysisProgress: 100,
+        simulationResult: null,
+        isSimulating: false,
+      }),
       setActiveTab: (tab) => set({ activeTab: tab }),
       setSimulationResult: (r) => set({ simulationResult: r, isSimulating: false }),
+      clearSimulationResult: () => set({ simulationResult: null, isSimulating: false }),
       setSimulating: (v) => set({ isSimulating: v }),
       setSelectedModule: (id) => set({ selectedModuleId: id }),
       reset: () => set(initialState),

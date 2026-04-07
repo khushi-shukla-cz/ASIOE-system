@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AnalysisResult } from '@/types'
+import type { AnalysisResult, SimulationResponse } from '@/types'
 
 const api = axios.create({
   baseURL: '/api',
@@ -82,11 +82,13 @@ export async function getMetrics(sessionId: string) {
 export async function runSimulation(params: {
   sessionId: string
   timeConstraintWeeks: number
+  maxModules?: number
   priorityDomains: string[]
-}) {
-  const res = await api.post('/v1/simulate', {
+}): Promise<SimulationResponse> {
+  const res = await api.post<SimulationResponse>('/v1/simulate', {
     session_id: params.sessionId,
     time_constraint_weeks: params.timeConstraintWeeks,
+    max_modules: params.maxModules,
     priority_domains: params.priorityDomains,
     exclude_module_ids: [],
   })

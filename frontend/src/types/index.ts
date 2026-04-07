@@ -160,6 +160,27 @@ export interface AnalysisResult {
 export interface SimulationRequest {
   session_id: string
   time_constraint_weeks: number
+  max_modules?: number
   priority_domains: string[]
   exclude_module_ids: string[]
+}
+
+export interface SimulationDelta {
+  original_modules: number
+  simulated_modules: number
+  module_delta: number
+  original_hours: number
+  simulated_hours: number
+  hour_delta: number
+}
+
+export interface SimulationResponse {
+  session_id: string
+  simulation_key: string
+  simulation_applied: boolean
+  time_constraint_weeks: number
+  max_modules: number
+  priority_domains: string[]
+  learning_path: LearningPathResult
+  delta: SimulationDelta
 }

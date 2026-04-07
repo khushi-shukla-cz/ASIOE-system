@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain, User, BarChart3, GitBranch, Network,
-  Terminal, Sliders, ArrowLeft, Download,
+  Terminal, Sliders, ArrowLeft,
   CheckCircle, Clock, Zap, Layers
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -49,7 +49,7 @@ function EmptyState() {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const { result, sessionId } = useStore()
+  const { result, sessionId, simulationResult, clearSimulationResult } = useStore()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
 
   if (!result || !result.gap_analysis || !result.learning_path) {
@@ -87,6 +87,20 @@ export default function DashboardPage() {
 
           {/* Quick stats */}
           <div className="hidden md:flex items-center gap-4">
+            <div className="text-xs">
+              {simulationResult ? (
+                <button
+                  onClick={clearSimulationResult}
+                  className="px-2 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                >
+                  Simulated Path Active · View Original
+                </button>
+              ) : (
+                <span className="px-2 py-1 rounded-md bg-slate-50 text-slate-500 border border-slate-200">
+                  Baseline Path
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <CheckCircle size={13} className="text-sage-500" />
               <span>{skill_profile?.skills.length || 0} skills extracted</span>

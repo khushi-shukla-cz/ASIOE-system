@@ -7,15 +7,11 @@ POST /api/v1/simulate — Recompute path with new constraints
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import structlog
 from fastapi import APIRouter, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
-
 from db.cache import build_cache_key, cache_get, cache_set
-from db.database import get_db
 from engines.path.path_engine import get_path_engine
 from engines.rag.rag_engine import get_rag_engine
 from schemas.schemas import GapAnalysisResult, SimulationRequest
@@ -58,11 +54,12 @@ async def simulate(request: SimulationRequest) -> Dict[str, Any]:
 
     # Recompute path with new constraints
     path_engine = get_path_engine()
+    requested_max_modules = request.max_modules or 20
     new_path = await path_engine.generate_path(
         session_id=request.session_id,
         gap_analysis=gap_result,
         candidate_skill_ids=candidate_skill_ids,
-        max_modules=20,
+        max_modules=requested_max_modules,
         time_constraint_weeks=request.time_constraint_weeks,
         priority_domains=request.priority_domains,
     )
@@ -87,16 +84,25 @@ async def simulate(request: SimulationRequest) -> Dict[str, Any]:
     sim_key = build_cache_key("simulation", request.session_id, str(request.time_constraint_weeks))
     await cache_set(sim_key, new_path.model_dump(), ttl=1800)
 
+    original_phases: List[Dict[str, Any]] = cached.get("learning_path", {}).get("phases", [])
+    original_module_count = sum(len(phase.get("modules", [])) for phase in original_phases)
+    original_hours = cached.get("learning_path", {}).get("total_hours", 0)
+    simulated_hours = new_path.total_hours
+
     return {
         "session_id": request.session_id,
         "simulation_key": sim_key,
+        "simulation_applied": True,
         "time_constraint_weeks": request.time_constraint_weeks,
+        "max_modules": requested_max_modules,
         "priority_domains": request.priority_domains,
         "learning_path": new_path.model_dump(),
         "delta": {
-            "original_modules": len(cached.get("learning_path", {}).get("phases", [])),
+            "original_modules": original_module_count,
             "simulated_modules": new_path.total_modules,
-            "original_hours": cached.get("learning_path", {}).get("total_hours", 0),
-            "simulated_hours": new_path.total_hours,
+            "module_delta": new_path.total_modules - original_module_count,
+            "original_hours": original_hours,
+            "simulated_hours": simulated_hours,
+            "hour_delta": simulated_hours - original_hours,
         },
     }
