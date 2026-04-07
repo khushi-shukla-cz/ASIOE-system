@@ -16,14 +16,20 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 import structlog
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from api.routes import analysis, health, simulation
 from core.config import settings
+from core.errors import (
+    AppError,
+    ErrorCode,
+    build_error_response,
+)
 from core.logging import configure_logging
 from db.cache import close_redis, get_redis
 from db.database import close_db, init_db
@@ -102,18 +108,36 @@ def create_app() -> FastAPI:
 
     app.add_middleware(GZipMiddleware, minimum_size=1024)
 
-    # Request ID middleware for distributed tracing
+    # Correlation ID middleware for distributed tracing
     @app.middleware("http")
-    async def request_id_middleware(request: Request, call_next):
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    async def correlation_middleware(request: Request, call_next):
+        correlation_header = settings.CORRELATION_HEADER_NAME
+        correlation_id = (
+            request.headers.get(correlation_header)
+            or request.headers.get("X-Request-ID")
+            or str(uuid.uuid4())
+        )
+
+        request.state.correlation_id = correlation_id
         structlog.contextvars.clear_contextvars()
-        structlog.contextvars.bind_contextvars(request_id=request_id)
+        structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
 
         start_time = time.perf_counter()
-        response: Response = await call_next(request)
-        duration_ms = (time.perf_counter() - start_time) * 1000
+        try:
+            response: Response = await call_next(request)
+        except Exception:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            logger.error(
+                "http.request.failed",
+                method=request.method,
+                path=request.url.path,
+                duration_ms=round(duration_ms, 2),
+                exc_info=True,
+            )
+            raise
 
-        response.headers["X-Request-ID"] = request_id
+        duration_ms = (time.perf_counter() - start_time) * 1000
+        response.headers[correlation_header] = correlation_id
         response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
 
         logger.info(
@@ -122,6 +146,7 @@ def create_app() -> FastAPI:
             path=request.url.path,
             status=response.status_code,
             duration_ms=round(duration_ms, 2),
+            correlation_id=correlation_id,
         )
         return response
 
@@ -135,23 +160,57 @@ def create_app() -> FastAPI:
     app.include_router(simulation.router, prefix="/api/v1", tags=["Simulation"])
 
     # ── Exception Handlers ─────────────────────────────────────────────────────
-    @app.exception_handler(ValueError)
-    async def value_error_handler(request: Request, exc: ValueError):
-        return JSONResponse(
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return build_error_response(
+            request=request,
             status_code=422,
-            content={"detail": str(exc), "type": "validation_error"},
+            code=ErrorCode.VALIDATION_ERROR,
+            message="Request validation failed",
+            details={"errors": exc.errors()},
+        )
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        code = ErrorCode.VALIDATION_ERROR if 400 <= exc.status_code < 500 else ErrorCode.INTERNAL_ERROR
+        message = str(exc.detail) if exc.detail else "HTTP request failed"
+        return build_error_response(
+            request=request,
+            status_code=exc.status_code,
+            code=code,
+            message=message,
+            details={"status_code": exc.status_code},
+        )
+
+    @app.exception_handler(AppError)
+    async def app_error_handler(request: Request, exc: AppError):
+        return build_error_response(
+            request=request,
+            status_code=exc.status_code,
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+        )
+
+    @app.exception_handler(TimeoutError)
+    async def timeout_exception_handler(request: Request, exc: TimeoutError):
+        return build_error_response(
+            request=request,
+            status_code=504,
+            code=ErrorCode.TIMEOUT_ERROR,
+            message="Request timed out",
+            details={"error": str(exc)},
         )
 
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception):
         logger.error("unhandled.exception", error=str(exc), exc_info=True)
-        return JSONResponse(
+        return build_error_response(
+            request=request,
             status_code=500,
-            content={
-                "detail": "Internal server error",
-                "type": "internal_error",
-                "request_id": structlog.contextvars.get_contextvars().get("request_id"),
-            },
+            code=ErrorCode.INTERNAL_ERROR,
+            message="Internal server error",
+            details={"error": str(exc)},
         )
 
     return app

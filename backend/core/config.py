@@ -99,6 +99,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     ENABLE_METRICS: bool = True
     SENTRY_DSN: Optional[str] = None
+    CORRELATION_HEADER_NAME: str = "X-Correlation-ID"
+
+    # ── Reliability / Resilience ──────────────────────────────────────────────
+    ENGINE_DEFAULT_TIMEOUT_SECONDS: int = 30
+    ENGINE_DEFAULT_RETRY_ATTEMPTS: int = 2
+    ENGINE_CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = 5
+    ENGINE_CIRCUIT_BREAKER_RECOVERY_SECONDS: int = 30
 
     @field_validator("APP_ENV", mode="before")
     @classmethod

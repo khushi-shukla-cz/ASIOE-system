@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 import structlog
 from fastapi import APIRouter, HTTPException
 from db.cache import build_cache_key, cache_get, cache_set
+from core.resilience import run_with_resilience
 from engines.path.path_engine import get_path_engine
 from engines.rag.rag_engine import get_rag_engine
 from schemas.schemas import GapAnalysisResult, SimulationRequest
@@ -55,19 +56,25 @@ async def simulate(request: SimulationRequest) -> Dict[str, Any]:
     # Recompute path with new constraints
     path_engine = get_path_engine()
     requested_max_modules = request.max_modules or 20
-    new_path = await path_engine.generate_path(
-        session_id=request.session_id,
-        gap_analysis=gap_result,
-        candidate_skill_ids=candidate_skill_ids,
-        max_modules=requested_max_modules,
-        time_constraint_weeks=request.time_constraint_weeks,
-        priority_domains=request.priority_domains,
+    new_path = await run_with_resilience(
+        operation_name="simulation.path.generate",
+        func=lambda: path_engine.generate_path(
+            session_id=request.session_id,
+            gap_analysis=gap_result,
+            candidate_skill_ids=candidate_skill_ids,
+            max_modules=requested_max_modules,
+            time_constraint_weeks=request.time_constraint_weeks,
+            priority_domains=request.priority_domains,
+        ),
     )
 
     # Re-enrich with courses
     rag_engine = get_rag_engine()
     all_modules = [m for phase in new_path.phases for m in phase.modules]
-    enriched = await rag_engine.enrich_modules(all_modules)
+    enriched = await run_with_resilience(
+        operation_name="simulation.rag.enrich",
+        func=lambda: rag_engine.enrich_modules(all_modules),
+    )
     module_map = {m.module_id: m for m in enriched}
     for phase in new_path.phases:
         phase.modules = [module_map.get(m.module_id, m) for m in phase.modules]

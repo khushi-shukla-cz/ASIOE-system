@@ -15,6 +15,7 @@ from typing import Any, Dict, Optional, Set
 
 import structlog
 from core.config import settings
+from core.resilience import run_with_resilience
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.cache import build_cache_key, cache_get, cache_set
@@ -86,8 +87,14 @@ class AnalysisService:
             # ── Engine 1: Parse Resume ────────────────────────────────────────
             t0 = time.perf_counter()
             parsing_engine = get_parsing_engine()
-            resume_data = await parsing_engine.parse_resume(file_bytes, filename)
-            jd_data = await parsing_engine.parse_jd(request.jd_text)
+            resume_data = await run_with_resilience(
+                operation_name="parsing.parse_resume",
+                func=lambda: parsing_engine.parse_resume(file_bytes, filename),
+            )
+            jd_data = await run_with_resilience(
+                operation_name="parsing.parse_jd",
+                func=lambda: parsing_engine.parse_jd(request.jd_text),
+            )
             total_tokens += resume_data.get("input_tokens", 0) + resume_data.get("output_tokens", 0)
             total_tokens += jd_data.get("input_tokens", 0) + jd_data.get("output_tokens", 0)
             await self._log_audit(db, session_id, "parsing_engine", "parse_resume_jd",
@@ -100,7 +107,10 @@ class AnalysisService:
             # ── Engine 2: Gap Analysis ────────────────────────────────────────
             t0 = time.perf_counter()
             gap_engine = get_gap_engine()
-            gap_result = await gap_engine.analyze(session_id, resume_data, jd_data)
+            gap_result = await run_with_resilience(
+                operation_name="gap.analyze",
+                func=lambda: gap_engine.analyze(session_id, resume_data, jd_data),
+            )
             await self._log_audit(db, session_id, "gap_engine", "gap_analysis",
                                   int((time.perf_counter()-t0)*1000), True)
 
@@ -112,12 +122,15 @@ class AnalysisService:
                 for s in resume_data.get("skills", [])
             } - {""}
 
-            path_result = await path_engine.generate_path(
-                session_id=session_id,
-                gap_analysis=gap_result,
-                candidate_skill_ids=candidate_skill_ids,
-                max_modules=request.max_modules,
-                time_constraint_weeks=request.time_constraint_weeks,
+            path_result = await run_with_resilience(
+                operation_name="path.generate",
+                func=lambda: path_engine.generate_path(
+                    session_id=session_id,
+                    gap_analysis=gap_result,
+                    candidate_skill_ids=candidate_skill_ids,
+                    max_modules=request.max_modules,
+                    time_constraint_weeks=request.time_constraint_weeks,
+                ),
             )
             # Set target role on path
             path_result.target_role = request.target_role or "Target Role"
@@ -128,7 +141,10 @@ class AnalysisService:
             t0 = time.perf_counter()
             rag_engine = get_rag_engine()
             all_modules = [m for phase in path_result.phases for m in phase.modules]
-            enriched_modules = await rag_engine.enrich_modules(all_modules)
+            enriched_modules = await run_with_resilience(
+                operation_name="rag.enrich_modules",
+                func=lambda: rag_engine.enrich_modules(all_modules),
+            )
 
             # Re-assign enriched modules back to phases
             module_map = {m.module_id: m for m in enriched_modules}
@@ -141,12 +157,15 @@ class AnalysisService:
             # ── Engine 5: Explainability ──────────────────────────────────────
             t0 = time.perf_counter()
             explain_engine = get_explainability_engine()
-            trace = await explain_engine.generate_system_trace(
-                session_id=session_id,
-                parsing_data={"resume": resume_data, "jd": jd_data},
-                gap_analysis=gap_result,
-                path=path_result,
-                total_tokens=total_tokens,
+            trace = await run_with_resilience(
+                operation_name="explainability.generate_trace",
+                func=lambda: explain_engine.generate_system_trace(
+                    session_id=session_id,
+                    parsing_data={"resume": resume_data, "jd": jd_data},
+                    gap_analysis=gap_result,
+                    path=path_result,
+                    total_tokens=total_tokens,
+                ),
             )
             await self._log_audit(db, session_id, "explainability_engine", "system_trace",
                                   int((time.perf_counter()-t0)*1000), True)
