@@ -36,7 +36,7 @@ describe('AnalyzePage', () => {
     )
 
     const submitBtn = screen.getByRole('button', { name: /run adaptive analysis/i })
-    const jdInput = screen.getByRole('textbox')
+    const jdInput = screen.getByPlaceholderText(/paste the full job description here/i)
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement | null
 
     expect(fileInput).not.toBeNull()
