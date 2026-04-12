@@ -15,11 +15,17 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import structlog
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.auth import (
+    AuthenticatedPrincipal,
+    get_current_principal,
+    issue_session_token,
+    require_session_access,
+)
 from core.config import settings
 from db.cache import build_cache_key, cache_get, cache_set
 from db.database import get_db
@@ -52,12 +58,14 @@ MAX_UPLOAD_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
     ),
 )
 async def analyze(
+    response: Response,
     resume: UploadFile = File(..., description="Resume file (PDF, DOCX, or TXT)"),
     jd_text: str = Form(..., description="Job description text"),
     target_role: Optional[str] = Form(default=None),
     priority_mode: str = Form(default="balanced"),
     max_modules: int = Form(default=20),
     time_constraint_weeks: Optional[int] = Form(default=None),
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisCompleteResponse:
 
@@ -106,6 +114,11 @@ async def analyze(
         request=request,
     )
 
+    response.headers["X-Session-Token"] = issue_session_token(
+        session_id=session.id,
+        user_id=principal.user_id,
+    )
+
     return result
 
 
@@ -118,8 +131,11 @@ async def analyze(
 )
 async def get_session(
     session_id: str,
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
     db: AsyncSession = Depends(get_db),
 ) -> SessionResponse:
+    del principal
+
     result = await db.execute(
         select(AnalysisSession).where(AnalysisSession.id == session_id)
     )
@@ -145,8 +161,11 @@ async def get_session(
 )
 async def get_results(
     session_id: str,
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
+    del principal
+
     # Check cache first
     cache_key = build_cache_key("analysis", session_id)
     cached = await cache_get(cache_key)
@@ -278,7 +297,12 @@ def _reconstruct_response(
     "/explain/{session_id}",
     summary="Get Per-Node Explainability Data",
 )
-async def get_explanations(session_id: str) -> Dict[str, Any]:
+async def get_explanations(
+    session_id: str,
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
+) -> Dict[str, Any]:
+    del principal
+
     cache_key = build_cache_key("analysis", session_id)
     cached = await cache_get(cache_key)
     if not cached:
@@ -322,7 +346,12 @@ async def get_explanations(session_id: str) -> Dict[str, Any]:
     "/graph/{session_id}",
     summary="Get Skill Graph Visualization Data",
 )
-async def get_graph(session_id: str) -> Dict[str, Any]:
+async def get_graph(
+    session_id: str,
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
+) -> Dict[str, Any]:
+    del principal
+
     cache_key = build_cache_key("analysis", session_id)
     cached = await cache_get(cache_key)
     if not cached:
@@ -357,8 +386,11 @@ async def get_graph(session_id: str) -> Dict[str, Any]:
 )
 async def get_metrics(
     session_id: str,
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
     db: AsyncSession = Depends(get_db),
 ) -> Dict[str, Any]:
+    del principal
+
     result = await db.execute(
         select(AuditLog)
         .where(AuditLog.session_id == session_id)

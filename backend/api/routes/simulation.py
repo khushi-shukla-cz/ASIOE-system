@@ -10,7 +10,13 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
+from core.auth import (
+    AuthenticatedPrincipal,
+    get_current_principal,
+    verify_session_token,
+)
+from core.config import settings
 from db.cache import build_cache_key, cache_get, cache_set
 from core.resilience import run_with_resilience
 from engines.path.path_engine import get_path_engine
@@ -29,7 +35,21 @@ router = APIRouter()
         "without re-running the full parsing and gap analysis pipeline."
     ),
 )
-async def simulate(request: SimulationRequest) -> Dict[str, Any]:
+async def simulate(
+    request: SimulationRequest,
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
+    x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
+) -> Dict[str, Any]:
+    if settings.AUTH_ENABLED and not x_session_token:
+        raise HTTPException(status_code=401, detail="X-Session-Token header is required")
+
+    if x_session_token:
+        verify_session_token(
+            token=x_session_token,
+            session_id=request.session_id,
+            user_id=principal.user_id,
+        )
+
     # Load cached analysis results
     cache_key = build_cache_key("analysis", request.session_id)
     cached = await cache_get(cache_key)

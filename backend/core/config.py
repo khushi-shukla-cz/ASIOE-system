@@ -110,6 +110,12 @@ class Settings(BaseSettings):
     RATE_LIMIT_PATH_PREFIX: str = "/api/v1"
     RATE_LIMIT_TRUST_PROXY_HEADERS: bool = True
 
+    # -- Authentication / Authorization --
+    AUTH_ENABLED: bool = False
+    API_AUTH_KEYS: str = ""
+    DEFAULT_AUTH_USER: str = "anonymous"
+    SESSION_TOKEN_TTL_SECONDS: int = 86400
+
     # ── Reliability / Resilience ──────────────────────────────────────────────
     ENGINE_DEFAULT_TIMEOUT_SECONDS: int = 30
     ENGINE_DEFAULT_RETRY_ATTEMPTS: int = 2
