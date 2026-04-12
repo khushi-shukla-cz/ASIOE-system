@@ -101,6 +101,15 @@ class Settings(BaseSettings):
     SENTRY_DSN: Optional[str] = None
     CORRELATION_HEADER_NAME: str = "X-Correlation-ID"
 
+    # -- API Security --
+    SECURITY_HEADERS_ENABLED: bool = True
+    SECURITY_ENABLE_HSTS: bool = True
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_MAX_REQUESTS: int = 120
+    RATE_LIMIT_WINDOW_SECONDS: int = 60
+    RATE_LIMIT_PATH_PREFIX: str = "/api/v1"
+    RATE_LIMIT_TRUST_PROXY_HEADERS: bool = True
+
     # ── Reliability / Resilience ──────────────────────────────────────────────
     ENGINE_DEFAULT_TIMEOUT_SECONDS: int = 30
     ENGINE_DEFAULT_RETRY_ATTEMPTS: int = 2

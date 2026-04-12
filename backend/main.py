@@ -31,6 +31,7 @@ from core.errors import (
     build_error_response,
 )
 from core.logging import configure_logging
+from core.security import RateLimitMiddleware, SecurityHeadersMiddleware
 from db.cache import close_redis, get_redis
 from db.database import close_db, init_db
 from db.neo4j_manager import neo4j_manager
@@ -107,6 +108,12 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+    if settings.SECURITY_HEADERS_ENABLED:
+        app.add_middleware(SecurityHeadersMiddleware)
+
+    if settings.RATE_LIMIT_ENABLED:
+        app.add_middleware(RateLimitMiddleware)
 
     # Correlation ID middleware for distributed tracing
     @app.middleware("http")

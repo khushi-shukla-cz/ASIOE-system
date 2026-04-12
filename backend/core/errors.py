@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 
 class ErrorCode(str, Enum):
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    RATE_LIMITED = "RATE_LIMITED"
     ENGINE_ERROR = "ENGINE_ERROR"
     INFRA_ERROR = "INFRA_ERROR"
     TIMEOUT_ERROR = "TIMEOUT_ERROR"
