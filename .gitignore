@@ -18,6 +18,8 @@ venv/
 node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
+frontend/vite.config.ts.timestamp-*.mjs
 
 # Data (large files)
 backend/data/raw/
