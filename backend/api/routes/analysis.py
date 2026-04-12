@@ -11,10 +11,9 @@ GET  /api/v1/metrics/{id}     — Get session performance metrics
 """
 from __future__ import annotations
 
-import os
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
 
-import aiofiles
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -22,10 +21,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from db.cache import build_cache_key, cache_get
+from db.cache import build_cache_key, cache_get, cache_set
 from db.database import get_db
-from db.models import AnalysisSession, AuditLog
-from engines.explainability.explainability_engine import get_explainability_engine
+from db.models import AnalysisSession, AuditLog, GapAnalysis, LearningPath, SkillProfile
 from schemas.schemas import (
     AnalysisCompleteResponse,
     AnalyzeRequest,
@@ -167,9 +165,110 @@ async def get_results(
     if session.status == SessionStatus.FAILED:
         raise HTTPException(status_code=500, detail="Analysis failed")
 
-    raise HTTPException(
-        status_code=404,
-        detail="Results not found in cache. Re-run analysis.",
+    if session.status != SessionStatus.COMPLETED:
+        raise HTTPException(status_code=404, detail="Analysis is not complete")
+
+    profile_result = await db.execute(
+        select(SkillProfile).where(SkillProfile.session_id == session_id)
+    )
+    profile = profile_result.scalar_one_or_none()
+
+    gap_result = await db.execute(
+        select(GapAnalysis).where(GapAnalysis.session_id == session_id)
+    )
+    gap = gap_result.scalar_one_or_none()
+
+    path_result = await db.execute(
+        select(LearningPath).where(LearningPath.session_id == session_id)
+    )
+    path = path_result.scalar_one_or_none()
+
+    logs_result = await db.execute(
+        select(AuditLog).where(AuditLog.session_id == session_id)
+    )
+    logs = logs_result.scalars().all()
+
+    if not profile or not gap or not path:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis artifacts are incomplete. Re-run analysis.",
+        )
+
+    reconstructed = _reconstruct_response(session, profile, gap, path, logs)
+    await cache_set(cache_key, reconstructed.model_dump(mode="json"), ttl=settings.CACHE_TTL_SECONDS)
+    return reconstructed
+
+
+def _readiness_label(score: float) -> str:
+    if score >= 0.8:
+        return "Ready"
+    if score >= 0.6:
+        return "Near Ready"
+    if score >= 0.4:
+        return "Partial"
+    return "Needs Work"
+
+
+def _reconstruct_response(
+    session: AnalysisSession,
+    profile: SkillProfile,
+    gap: GapAnalysis,
+    path: LearningPath,
+    logs: list[AuditLog],
+) -> AnalysisCompleteResponse:
+    extracted_skills = profile.extracted_skills or {}
+    skills = list(extracted_skills.values()) if isinstance(extracted_skills, dict) else extracted_skills
+
+    jd_required = profile.jd_required_skills or {}
+    jd_required_skills = list(jd_required.values()) if isinstance(jd_required, dict) else jd_required
+
+    now = datetime.now(timezone.utc)
+    processing_time_ms = float(sum((log.duration_ms or 0) for log in logs))
+
+    return AnalysisCompleteResponse(
+        session_id=session.id,
+        status=session.status,
+        skill_profile={
+            "candidate_name": profile.candidate_name,
+            "current_role": profile.current_role,
+            "years_of_experience": profile.years_of_experience,
+            "education_level": profile.education_level,
+            "skills": skills,
+            "certifications": [],
+            "parsing_confidence": profile.parsing_confidence,
+            "target_role": session.target_role,
+            "jd_required_skills": jd_required_skills,
+        },
+        gap_analysis={
+            "session_id": session.id,
+            "overall_readiness_score": gap.overall_readiness_score,
+            "readiness_label": _readiness_label(gap.overall_readiness_score),
+            "critical_gaps": gap.critical_gaps or [],
+            "major_gaps": gap.major_gaps or [],
+            "minor_gaps": gap.minor_gaps or [],
+            "strength_areas": gap.strength_areas or [],
+            "domain_coverage": gap.domain_coverage or [],
+            "reasoning_trace": "Reconstructed from persisted analysis artifacts",
+            "analysis_timestamp": gap.created_at or now,
+        },
+        learning_path={
+            "session_id": session.id,
+            "path_id": path.id,
+            "target_role": session.target_role or "Target Role",
+            "phases": path.phases or [],
+            "total_modules": path.total_modules,
+            "total_hours": path.estimated_hours,
+            "total_weeks": path.estimated_weeks,
+            "path_graph": path.path_graph or {"nodes": [], "edges": []},
+            "efficiency_score": path.efficiency_score,
+            "redundancy_eliminated": 0,
+            "path_algorithm": path.path_algorithm,
+            "path_version": path.path_version,
+            "reasoning_trace": "Reconstructed from persisted analysis artifacts",
+            "generated_at": path.created_at or now,
+        },
+        reasoning_trace=None,
+        processing_time_ms=processing_time_ms,
     )
 
 
