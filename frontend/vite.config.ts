@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
@@ -31,6 +32,28 @@ export default defineConfig({
       },
     },
   },
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   test: {
     environment: 'jsdom',
     globals: true,
@@ -41,6 +64,12 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/main.tsx'],
+      thresholds: {
+        lines: 35,
+        functions: 35,
+        statements: 35,
+        branches: 25,
+      },
     },
   },
 })
