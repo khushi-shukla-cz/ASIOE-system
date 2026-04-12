@@ -291,8 +291,8 @@ class AdaptivePathEngine:
 
             composite_score = (
                 0.35 * importance_score
-                + 0.30 * gap_boost
-                + 0.20 * depth_score
+                + 0.35 * gap_boost
+                + 0.15 * depth_score
                 + 0.10 * domain_boost
                 + 0.05 * (1.0 / max(hours / 40.0, 0.5))  # Efficiency: prefer lower-time skills
             )

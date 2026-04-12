@@ -123,7 +123,7 @@ def test_http_error_contract_shape_and_code():
 
 
 def test_internal_error_contract_shape_and_code():
-    client = TestClient(_build_test_app())
+    client = TestClient(_build_test_app(), raise_server_exceptions=False)
 
     response = client.get("/internal", headers={"X-Correlation-ID": "cid-000"})
 
