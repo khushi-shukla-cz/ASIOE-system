@@ -188,6 +188,6 @@ class AuditLog(Base):
     output_tokens: Mapped[Optional[int]] = mapped_column(Integer)
     success: Mapped[bool] = mapped_column(Boolean, default=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text)
-    metadata: Mapped[Dict] = mapped_column(JSON, default=dict)
+    audit_metadata: Mapped[Dict] = mapped_column("metadata", JSON, default=dict)
 
     session: Mapped["AnalysisSession"] = relationship(back_populates="audit_logs")
