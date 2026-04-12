@@ -40,12 +40,14 @@ async def simulate(
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
     x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
 ) -> Dict[str, Any]:
-    if settings.AUTH_ENABLED and not x_session_token:
+    token_value = x_session_token if isinstance(x_session_token, str) else None
+
+    if settings.AUTH_ENABLED and not token_value:
         raise HTTPException(status_code=401, detail="X-Session-Token header is required")
 
-    if x_session_token:
+    if token_value:
         verify_session_token(
-            token=x_session_token,
+            token=token_value,
             session_id=request.session_id,
             user_id=principal.user_id,
         )

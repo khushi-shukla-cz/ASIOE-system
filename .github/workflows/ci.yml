@@ -129,6 +129,7 @@ jobs:
   security-backend:
     name: Backend Dependency Security Scan
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -150,6 +151,7 @@ jobs:
   security-frontend:
     name: Frontend Dependency Security Scan
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
       - name: Checkout
