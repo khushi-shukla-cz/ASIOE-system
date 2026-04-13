@@ -1,5 +1,17 @@
 import asyncio
+import sys
+import types
 from types import SimpleNamespace
+
+if "engines.path.path_engine" not in sys.modules:
+    path_engine_stub = types.ModuleType("engines.path.path_engine")
+    path_engine_stub.get_path_engine = lambda: None
+    sys.modules["engines.path.path_engine"] = path_engine_stub
+
+if "engines.rag.rag_engine" not in sys.modules:
+    rag_engine_stub = types.ModuleType("engines.rag.rag_engine")
+    rag_engine_stub.get_rag_engine = lambda: None
+    sys.modules["engines.rag.rag_engine"] = rag_engine_stub
 
 from api.routes import simulation as simulation_route
 from schemas.schemas import SimulationRequest

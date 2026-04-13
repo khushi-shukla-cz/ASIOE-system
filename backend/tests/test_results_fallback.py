@@ -1,10 +1,21 @@
 import asyncio
+import sys
+import types
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+
+if "services.analysis_service" not in sys.modules:
+    analysis_service_stub = types.ModuleType("services.analysis_service")
+
+    def _stub_get_analysis_service():
+        raise RuntimeError("analysis service should be monkeypatched in tests")
+
+    analysis_service_stub.get_analysis_service = _stub_get_analysis_service
+    sys.modules["services.analysis_service"] = analysis_service_stub
 
 from api.routes import analysis as analysis_route
 from schemas.schemas import SessionStatus

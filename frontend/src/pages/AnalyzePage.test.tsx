@@ -1,7 +1,8 @@
 import { BrowserRouter } from 'react-router-dom'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import AnalyzePage from '@/pages/AnalyzePage'
+import { runAnalysis } from '@/utils/api'
 
 vi.mock('@/utils/api', () => ({
   runAnalysis: vi.fn(),
@@ -59,5 +60,42 @@ describe('AnalyzePage', () => {
     )
 
     expect(submitBtn).toBeEnabled()
+  })
+
+  it('shows loading pipeline and progress stage updates while analysis is running', async () => {
+    const user = userEvent.setup()
+    vi.mocked(runAnalysis).mockImplementation(() => new Promise(() => {}) as any)
+
+    const { container } = render(
+      <BrowserRouter>
+        <AnalyzePage />
+      </BrowserRouter>
+    )
+
+    const jdInput = screen.getByPlaceholderText(/paste the full job description here/i)
+    const submitBtn = screen.getByRole('button', { name: /run adaptive analysis/i })
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement | null
+
+    expect(fileInput).not.toBeNull()
+    if (!fileInput) {
+      throw new Error('file input not found')
+    }
+
+    const resume = new File(['resume content'], 'resume.txt', { type: 'text/plain' })
+    await user.upload(fileInput, resume)
+    await user.type(
+      jdInput,
+      'Senior backend engineer role requiring Python, APIs, SQL, Docker, and testing experience.'
+    )
+
+    expect(submitBtn).toBeEnabled()
+
+    await user.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText(/running analysis pipeline/i)).toBeInTheDocument()
+    })
+    expect(screen.getAllByText(/parsing engine/i).length).toBeGreaterThan(0)
+    expect(runAnalysis).toHaveBeenCalledTimes(1)
   })
 })
