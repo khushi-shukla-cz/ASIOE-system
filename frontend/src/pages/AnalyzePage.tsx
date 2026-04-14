@@ -175,7 +175,7 @@ export default function AnalyzePage() {
                     progress >= (PIPELINE_STAGES[i - 1]?.pct ?? 0)
                   return (
                     <div
-                      key={stage.engine}
+                      key={`${stage.engine}-${stage.pct}`}
                       className={`flex items-center gap-3 text-xs transition-all duration-300 ${
                         done ? 'text-slate-600' : active ? 'text-sage-600 font-medium' : 'text-slate-300'
                       }`}

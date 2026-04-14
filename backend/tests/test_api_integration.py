@@ -171,6 +171,55 @@ def test_post_analyze_rejects_invalid_upload_type(monkeypatch):
     assert 'Unsupported file type' in response.json()['detail']
 
 
+def test_post_analyze_rejects_oversized_upload(monkeypatch):
+    class _FakeService:
+        async def create_session(self, **kwargs):
+            return SimpleNamespace(id='s1')
+
+        async def run_analysis(self, **kwargs):
+            return _analysis_payload('s1')
+
+    monkeypatch.setattr(analysis_route, 'get_analysis_service', lambda: _FakeService())
+    monkeypatch.setattr(analysis_route, 'MAX_UPLOAD_BYTES', 120)
+
+    app = _build_app()
+    with TestClient(app) as client:
+        response = client.post(
+            '/api/v1/analyze',
+            files={'resume': ('resume.txt', b'x' * 121, 'text/plain')},
+            data={
+                'jd_text': 'Senior backend engineer with strong Python, SQL, API design, and Docker expertise.',
+            },
+        )
+
+    assert response.status_code == 413
+    assert 'File too large' in response.json()['detail']
+
+
+def test_post_analyze_rejects_near_empty_upload(monkeypatch):
+    class _FakeService:
+        async def create_session(self, **kwargs):
+            return SimpleNamespace(id='s1')
+
+        async def run_analysis(self, **kwargs):
+            return _analysis_payload('s1')
+
+    monkeypatch.setattr(analysis_route, 'get_analysis_service', lambda: _FakeService())
+
+    app = _build_app()
+    with TestClient(app) as client:
+        response = client.post(
+            '/api/v1/analyze',
+            files={'resume': ('resume.txt', b'x' * 99, 'text/plain')},
+            data={
+                'jd_text': 'Senior backend engineer with strong Python, SQL, API design, and Docker expertise.',
+            },
+        )
+
+    assert response.status_code == 422
+    assert 'empty or corrupted' in response.json()['detail']
+
+
 def test_get_results_uses_cached_payload(monkeypatch):
     payload = _analysis_payload('cached-s1')
 
