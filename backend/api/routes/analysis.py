@@ -11,6 +11,7 @@ GET  /api/v1/metrics/{id}     — Get session performance metrics
 """
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -42,6 +43,25 @@ logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 MAX_UPLOAD_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+
+def _percentile_ms(values: list[float], percentile: float) -> float:
+    """Return percentile value using linear interpolation for small samples."""
+    if not values:
+        return 0.0
+    sorted_values = sorted(values)
+    if len(sorted_values) == 1:
+        return float(sorted_values[0])
+
+    rank = (len(sorted_values) - 1) * (percentile / 100.0)
+    lower = math.floor(rank)
+    upper = math.ceil(rank)
+    if lower == upper:
+        return float(sorted_values[lower])
+
+    lower_value = sorted_values[lower]
+    upper_value = sorted_values[upper]
+    return float(lower_value + (upper_value - lower_value) * (rank - lower))
 
 
 # ── POST /analyze ──────────────────────────────────────────────────────────────
@@ -402,20 +422,59 @@ async def get_metrics(
         raise HTTPException(status_code=404, detail="No metrics found for session")
 
     engine_timings = {}
+    engine_distribution: Dict[str, Dict[str, Any]] = {}
     total_tokens = 0
+    durations: list[float] = []
+
     for log in logs:
+        duration = float(log.duration_ms or 0)
         engine_timings[log.engine] = {
             "operation": log.operation,
-            "duration_ms": log.duration_ms,
+            "duration_ms": duration,
             "success": log.success,
         }
+
+        if log.engine not in engine_distribution:
+            engine_distribution[log.engine] = {
+                "count": 0,
+                "total_duration_ms": 0.0,
+                "avg_duration_ms": 0.0,
+                "max_duration_ms": 0.0,
+                "min_duration_ms": 0.0,
+                "failures": 0,
+            }
+
+        bucket = engine_distribution[log.engine]
+        bucket["count"] += 1
+        bucket["total_duration_ms"] += duration
+        bucket["max_duration_ms"] = max(bucket["max_duration_ms"], duration)
+        bucket["min_duration_ms"] = (
+            duration if bucket["count"] == 1 else min(bucket["min_duration_ms"], duration)
+        )
+        if not log.success:
+            bucket["failures"] += 1
+
+        durations.append(duration)
         total_tokens += (log.input_tokens or 0) + (log.output_tokens or 0)
 
-    total_ms = sum(l.duration_ms or 0 for l in logs)
+    for bucket in engine_distribution.values():
+        if bucket["count"]:
+            bucket["avg_duration_ms"] = round(
+                bucket["total_duration_ms"] / bucket["count"], 2
+            )
+
+    total_ms = sum(durations)
 
     return {
         "session_id": session_id,
         "engine_timings": engine_timings,
+        "engine_distribution": engine_distribution,
+        "latency_ms": {
+            "p50": round(_percentile_ms(durations, 50), 2),
+            "p95": round(_percentile_ms(durations, 95), 2),
+            "min": round(min(durations), 2) if durations else 0.0,
+            "max": round(max(durations), 2) if durations else 0.0,
+        },
         "total_processing_ms": total_ms,
         "total_tokens_used": total_tokens,
         "all_engines_succeeded": all(l.success for l in logs),

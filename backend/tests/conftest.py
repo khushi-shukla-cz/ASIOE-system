@@ -106,6 +106,38 @@ if not _has_module("groq"):
 	groq_stub.AsyncGroq = _AsyncGroq
 	sys.modules["groq"] = groq_stub
 
+if not _has_module("redis"):
+	redis_stub = types.ModuleType("redis")
+	redis_asyncio_stub = types.ModuleType("redis.asyncio")
+
+	class _FakeRedisClient:
+		async def get(self, *args, **kwargs):
+			return None
+
+		async def setex(self, *args, **kwargs):
+			return True
+
+		async def delete(self, *args, **kwargs):
+			return 1
+
+		async def exists(self, *args, **kwargs):
+			return 0
+
+		async def aclose(self):
+			return None
+
+	class _RedisFactory:
+		@staticmethod
+		def from_url(*args, **kwargs):
+			return _FakeRedisClient()
+
+	redis_asyncio_stub.from_url = _RedisFactory.from_url
+	redis_asyncio_stub.Redis = _FakeRedisClient
+	redis_stub.asyncio = redis_asyncio_stub
+
+	sys.modules["redis"] = redis_stub
+	sys.modules["redis.asyncio"] = redis_asyncio_stub
+
 if not _has_module("sentence_transformers"):
 	st_stub = types.ModuleType("sentence_transformers")
 
