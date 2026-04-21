@@ -9,7 +9,7 @@ import os
 from functools import lru_cache
 from typing import List, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -108,7 +108,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_MAX_REQUESTS: int = 120
     RATE_LIMIT_WINDOW_SECONDS: int = 60
     RATE_LIMIT_PATH_PREFIX: str = "/api/v1"
-    RATE_LIMIT_TRUST_PROXY_HEADERS: bool = True
+    RATE_LIMIT_TRUST_PROXY_HEADERS: bool = False
 
     # -- Authentication / Authorization --
     AUTH_ENABLED: bool = False
@@ -129,6 +129,12 @@ class Settings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"APP_ENV must be one of {allowed}")
         return v
+
+    @model_validator(mode="after")
+    def validate_auth_configuration(self):
+        if self.AUTH_ENABLED and not self.API_AUTH_KEYS.strip():
+            raise ValueError("API_AUTH_KEYS must be configured when AUTH_ENABLED is true")
+        return self
 
 
 @lru_cache(maxsize=1)

@@ -105,6 +105,8 @@ services:
       ALLOWED_ORIGINS: '["http://localhost","http://localhost:80","http://localhost:5173"]'
       LOG_LEVEL: INFO
       ENABLE_METRICS: "true"
+      AUTH_ENABLED: "true"
+      API_AUTH_KEYS: ${API_AUTH_KEYS}
       DEBUG: "false"
     depends_on:
       postgres:
