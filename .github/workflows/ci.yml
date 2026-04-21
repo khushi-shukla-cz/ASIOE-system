@@ -80,7 +80,7 @@ jobs:
         run: |
           pytest backend/tests \
             --cov=backend \
-            --cov-fail-under=10 \
+            --cov-fail-under=12 \
             --cov-report=xml:backend/coverage.xml \
             --cov-report=term
 
