@@ -172,3 +172,19 @@ jobs:
       - name: Scan Node dependencies
         run: npm audit --audit-level=high
         working-directory: frontend
+
+  security-secrets:
+    name: Repository Secret Scan (Gitleaks)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository for leaked secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: gitleaks.toml

@@ -1,0 +1,16 @@
+title = "ASIOE gitleaks config"
+
+[allowlist]
+description = "Allow known non-secret placeholders used in tests and docs"
+regexes = [
+  '''test_secret_key_123456789012345678901234''',
+  '''test_postgres_password''',
+  '''test_neo4j_password''',
+  '''gsk_test_key''',
+  '''gsk_REPLACE_WITH_YOUR_GROQ_API_KEY''',
+  '''REPLACE_WITH_64_CHAR_HEX_SECRET''',
+  '''strong_password''',
+  '''asioe_neo4j_REPLACE''',
+  '''asioe_redis_REPLACE''',
+  '''asioe_pg_REPLACE_WITH_STRONG_PASSWORD'''
+]

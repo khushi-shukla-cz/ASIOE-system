@@ -177,6 +177,22 @@ npm run dev                        # http://localhost:5173
 
 ---
 
+## Secret Handling Policy
+
+1. Never commit real credentials (API keys, DB passwords, tokens, private keys) to git.
+2. Use `.env` locally and CI repository secrets for all sensitive values.
+3. Keep `.env.example` placeholder-only; it must never contain a real secret.
+4. Treat any leaked secret as compromised: rotate it immediately.
+5. CI runs a blocking repository secret scan (`security-secrets` job using Gitleaks).
+
+### Local Secret Scan (recommended before push)
+
+```bash
+docker run --rm -v "${PWD}:/repo" zricethezav/gitleaks:latest detect --source=/repo --config=/repo/gitleaks.toml --verbose
+```
+
+---
+
 ## Skill-Gap Analysis Logic
 
 ### Core Algorithm: Adaptive Topological Learning Path
