@@ -28,7 +28,7 @@ from core.auth import (
     require_session_access,
 )
 from core.config import settings
-from db.cache import build_cache_key, cache_get, cache_set
+from db.cache import build_cache_key, cache_get, cache_set, get_cache_metrics
 from db.database import get_db
 from db.models import AnalysisSession, AuditLog, GapAnalysis, LearningPath, SkillProfile
 from schemas.schemas import (
@@ -475,6 +475,7 @@ async def get_metrics(
             "min": round(min(durations), 2) if durations else 0.0,
             "max": round(max(durations), 2) if durations else 0.0,
         },
+        "cache": get_cache_metrics(),
         "total_processing_ms": total_ms,
         "total_tokens_used": total_tokens,
         "all_engines_succeeded": all(l.success for l in logs),

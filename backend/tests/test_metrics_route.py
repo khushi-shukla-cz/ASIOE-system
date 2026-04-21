@@ -78,6 +78,16 @@ def test_get_metrics_returns_percentiles_and_distribution():
         ),
     ]
 
+    analysis_route.get_cache_metrics = lambda: {
+        "hits": 7,
+        "misses": 3,
+        "total_requests": 10,
+        "hit_rate_percent": 70.0,
+        "sets": 4,
+        "deletes": 1,
+        "estimated_saved_processing_ms": 2400.0,
+    }
+
     response = asyncio.run(analysis_route.get_metrics("s1", db=_FakeDB(logs)))
 
     assert response["session_id"] == "s1"
@@ -98,6 +108,11 @@ def test_get_metrics_returns_percentiles_and_distribution():
 
     gap_stats = response["engine_distribution"]["gap"]
     assert gap_stats["failures"] == 1
+
+    assert response["cache"]["hits"] == 7
+    assert response["cache"]["misses"] == 3
+    assert response["cache"]["hit_rate_percent"] == 70.0
+    assert response["cache"]["estimated_saved_processing_ms"] == 2400.0
 
 
 def test_get_metrics_404_when_no_logs():
