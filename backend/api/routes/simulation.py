@@ -42,10 +42,10 @@ async def simulate(
 ) -> Dict[str, Any]:
     token_value = x_session_token if isinstance(x_session_token, str) else None
 
-    if settings.AUTH_ENABLED and not token_value:
-        raise HTTPException(status_code=401, detail="X-Session-Token header is required")
+    if settings.AUTH_ENABLED:
+        if not token_value:
+            raise HTTPException(status_code=401, detail="X-Session-Token header is required")
 
-    if token_value:
         verify_session_token(
             token=token_value,
             session_id=request.session_id,
