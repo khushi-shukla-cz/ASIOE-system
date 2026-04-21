@@ -92,3 +92,20 @@ def test_rank_nodes_scores_and_sequences_modules():
 
     # Foundational node with no prerequisites should include that reason.
     assert "foundational skill with no prerequisites" in by_id["skill_a"].why_selected
+
+
+def test_topological_sort_handles_cycle_by_breaking_edge(monkeypatch):
+    engine = AdaptivePathEngine()
+
+    graph = nx.DiGraph()
+    graph.add_node("skill_a")
+    graph.add_node("skill_b")
+    graph.add_edge("skill_a", "skill_b")
+    graph.add_edge("skill_b", "skill_a")
+
+    # Force deterministic cycle order to verify safe cycle edge removal behavior.
+    monkeypatch.setattr(nx, "simple_cycles", lambda _g: [["skill_a", "skill_b"]])
+
+    ordered = engine._topological_sort(graph, {"skill_a", "skill_b"})
+
+    assert ordered == ["skill_a", "skill_b"]
