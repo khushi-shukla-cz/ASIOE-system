@@ -32,6 +32,10 @@ from api.routes import simulation as simulation_route
 from core.auth import AuthenticatedPrincipal
 from schemas.schemas import SessionStatus
 
+# Clean up import-time stubs so other test modules can import real engines.
+sys.modules.pop("engines.path.path_engine", None)
+sys.modules.pop("engines.rag.rag_engine", None)
+
 
 class _DummyDB:
     async def execute(self, _stmt):

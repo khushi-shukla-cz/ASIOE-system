@@ -1,4 +1,12 @@
+import sys
+
 import networkx as nx
+
+# If another test inserted a lightweight module stub, discard it so this unit
+# test imports the real implementation.
+existing = sys.modules.get("engines.path.path_engine")
+if existing is not None and not getattr(existing, "__file__", None):
+    del sys.modules["engines.path.path_engine"]
 
 from engines.path.path_engine import AdaptivePathEngine
 from schemas.schemas import GapSeverity, SkillGap

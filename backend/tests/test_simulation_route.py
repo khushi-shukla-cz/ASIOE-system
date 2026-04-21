@@ -16,6 +16,10 @@ if "engines.rag.rag_engine" not in sys.modules:
 from api.routes import simulation as simulation_route
 from schemas.schemas import SimulationRequest
 
+# Clean up import-time stubs so other test modules can import real engines.
+sys.modules.pop("engines.path.path_engine", None)
+sys.modules.pop("engines.rag.rag_engine", None)
+
 
 class _DummyModule:
     def __init__(self, module_id: str):
