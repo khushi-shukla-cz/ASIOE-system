@@ -270,6 +270,42 @@ def test_get_results_requires_session_token_when_auth_enabled(monkeypatch):
     assert 'X-Session-Token header is required' in response.json()['detail']
 
 
+def test_get_graph_requires_session_token_when_auth_enabled(monkeypatch):
+    monkeypatch.setattr(settings, 'AUTH_ENABLED', True)
+    monkeypatch.setattr(settings, 'API_AUTH_KEYS', 'k1')
+
+    app = _build_auth_enforced_app()
+    with TestClient(app) as client:
+        response = client.get(
+            '/api/v1/graph/s1',
+            headers={
+                'X-API-Key': 'k1',
+                'X-User-Id': 'test-user',
+            },
+        )
+
+    assert response.status_code == 401
+    assert 'X-Session-Token header is required' in response.json()['detail']
+
+
+def test_get_explain_requires_session_token_when_auth_enabled(monkeypatch):
+    monkeypatch.setattr(settings, 'AUTH_ENABLED', True)
+    monkeypatch.setattr(settings, 'API_AUTH_KEYS', 'k1')
+
+    app = _build_auth_enforced_app()
+    with TestClient(app) as client:
+        response = client.get(
+            '/api/v1/explain/s1',
+            headers={
+                'X-API-Key': 'k1',
+                'X-User-Id': 'test-user',
+            },
+        )
+
+    assert response.status_code == 401
+    assert 'X-Session-Token header is required' in response.json()['detail']
+
+
 def test_post_simulate_recomputes_path(monkeypatch):
     async def _fake_cache_get(_key):
         return {
