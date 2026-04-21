@@ -30,6 +30,7 @@ if "engines.rag.rag_engine" not in sys.modules:
 from api.routes import analysis as analysis_route
 from api.routes import simulation as simulation_route
 from core.auth import AuthenticatedPrincipal
+from core.config import settings
 from schemas.schemas import SessionStatus
 
 # Clean up import-time stubs so other test modules can import real engines.
@@ -123,6 +124,17 @@ def _build_app() -> FastAPI:
     app.dependency_overrides[analysis_route.require_session_access] = lambda: AuthenticatedPrincipal(user_id='test-user')
     app.dependency_overrides[simulation_route.get_current_principal] = lambda: AuthenticatedPrincipal(user_id='test-user')
 
+    return app
+
+
+def _build_auth_enforced_app() -> FastAPI:
+    app = FastAPI()
+    app.include_router(analysis_route.router, prefix='/api/v1')
+
+    async def _override_db():
+        yield _DummyDB()
+
+    app.dependency_overrides[analysis_route.get_db] = _override_db
     return app
 
 
@@ -238,6 +250,24 @@ def test_get_results_uses_cached_payload(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()['session_id'] == 'cached-s1'
+
+
+def test_get_results_requires_session_token_when_auth_enabled(monkeypatch):
+    monkeypatch.setattr(settings, 'AUTH_ENABLED', True)
+    monkeypatch.setattr(settings, 'API_AUTH_KEYS', 'k1')
+
+    app = _build_auth_enforced_app()
+    with TestClient(app) as client:
+        response = client.get(
+            '/api/v1/results/s1',
+            headers={
+                'X-API-Key': 'k1',
+                'X-User-Id': 'test-user',
+            },
+        )
+
+    assert response.status_code == 401
+    assert 'X-Session-Token header is required' in response.json()['detail']
 
 
 def test_post_simulate_recomputes_path(monkeypatch):
