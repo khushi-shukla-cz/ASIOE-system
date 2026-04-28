@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import List, Optional
 
 from pydantic import Field, field_validator, model_validator
@@ -82,7 +83,29 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
     EMBEDDING_DIMENSION: int = 768
     EMBEDDING_BATCH_SIZE: int = 64
-    FAISS_INDEX_PATH: str = "/app/data/processed/faiss_index"
+
+    # ── Data Paths ────────────────────────────────────────────────────────────
+    DATA_DIR: Path = Path(__file__).resolve().parents[1] / "data"
+
+    @property
+    def PROCESSED_DATA_DIR(self) -> Path:  # noqa: N802
+        return self.DATA_DIR / "processed"
+
+    @property
+    def SKILL_ONTOLOGY_PATH(self) -> Path:  # noqa: N802
+        return self.PROCESSED_DATA_DIR / "skill_ontology.json"
+
+    @property
+    def COURSE_CATALOG_PATH(self) -> Path:  # noqa: N802
+        return self.PROCESSED_DATA_DIR / "course_catalog.json"
+
+    @property
+    def ONTOLOGY_EMBEDDINGS_CACHE_PATH(self) -> Path:  # noqa: N802
+        return self.PROCESSED_DATA_DIR / "ontology_embeddings.pkl"
+
+    @property
+    def FAISS_INDEX_PATH(self) -> Path:  # noqa: N802
+        return self.PROCESSED_DATA_DIR / "faiss_index"
 
     # ── Skill Graph ───────────────────────────────────────────────────────────
     SKILL_SIMILARITY_THRESHOLD: float = 0.82

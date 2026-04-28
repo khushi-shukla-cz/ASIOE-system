@@ -65,9 +65,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Seed skill graph from ontology
     from engines.skill_graph.skill_graph_engine import get_skill_graph_engine
-    from pathlib import Path
     graph_engine = get_skill_graph_engine()
-    ontology_path = Path("/app/data/processed/skill_ontology.json")
+    ontology_path = settings.SKILL_ONTOLOGY_PATH
     if ontology_path.exists():
         count = await graph_engine.initialize_graph(ontology_path)
         logger.info("skill.graph.seeded", skills=count)

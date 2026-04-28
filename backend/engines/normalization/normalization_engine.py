@@ -11,7 +11,6 @@ This eliminates duplicates and synonyms (e.g., "JS" → "JavaScript",
 from __future__ import annotations
 
 import json
-import os
 import pickle
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -26,8 +25,8 @@ from core.config import settings
 logger = structlog.get_logger(__name__)
 
 # Path to the canonical skill ontology (seeded from O*NET + manual curation)
-ONTOLOGY_PATH = Path("/app/data/processed/skill_ontology.json")
-EMBEDDINGS_CACHE_PATH = Path("/app/data/processed/ontology_embeddings.pkl")
+ONTOLOGY_PATH = settings.SKILL_ONTOLOGY_PATH
+EMBEDDINGS_CACHE_PATH = settings.ONTOLOGY_EMBEDDINGS_CACHE_PATH
 
 
 class SkillOntology:

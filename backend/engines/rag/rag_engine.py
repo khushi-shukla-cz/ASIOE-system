@@ -12,7 +12,6 @@ Pipeline:
 from __future__ import annotations
 
 import json
-import os
 import pickle
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -27,8 +26,8 @@ from schemas.schemas import LearningModule
 
 logger = structlog.get_logger(__name__)
 
-COURSE_CATALOG_PATH = Path("/app/data/processed/course_catalog.json")
-FAISS_INDEX_PATH = Path(settings.FAISS_INDEX_PATH)
+COURSE_CATALOG_PATH = settings.COURSE_CATALOG_PATH
+FAISS_INDEX_PATH = settings.FAISS_INDEX_PATH
 
 
 class CourseDocument:
