@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import time
+from pathlib import Path
 from typing import Dict, Tuple
 
 from fastapi import Request
+from fastapi import HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from core.config import settings
@@ -13,6 +15,67 @@ from core.logging import get_logger
 from db.cache import get_redis
 
 logger = get_logger(__name__)
+
+_ALLOWED_UPLOAD_MIME_TYPES = {
+    ".pdf": {"application/pdf", "application/octet-stream"},
+    ".docx": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream",
+    },
+    ".txt": {"text/plain", "text/plain; charset=utf-8", "application/octet-stream"},
+}
+
+
+def validate_uploaded_document(
+    filename: str,
+    content_type: str | None,
+    file_bytes: bytes,
+) -> None:
+    """Validate uploaded resume files before they enter the analysis pipeline."""
+    safe_name = Path(filename or "").name.strip()
+    if not safe_name or safe_name != filename or any(sep in filename for sep in ("/", "\\")):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid upload filename",
+        )
+
+    ext_name = safe_name.rsplit(".", 1)[-1].lower() if "." in safe_name else ""
+    if ext_name not in settings.ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unsupported file type '.{ext_name}'. Allowed: {settings.ALLOWED_EXTENSIONS}",
+        )
+
+    ext = f".{ext_name}" if ext_name else ""
+    allowed_mime_types = _ALLOWED_UPLOAD_MIME_TYPES.get(ext, set())
+    normalized_content_type = (content_type or "").lower().strip()
+    if normalized_content_type and normalized_content_type != "application/octet-stream":
+        if not any(
+            normalized_content_type == allowed or normalized_content_type.startswith(f"{allowed};")
+            for allowed in allowed_mime_types
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Unsupported MIME type '{content_type}' for {ext} upload",
+            )
+
+    if ext == ".pdf" and not file_bytes.startswith(b"%PDF-"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Resume content does not look like a valid PDF",
+        )
+
+    if ext == ".docx" and not file_bytes.startswith(b"PK\x03\x04"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Resume content does not look like a valid DOCX file",
+        )
+
+    if ext == ".txt" and b"\x00" in file_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Text uploads must not contain binary data",
+        )
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
