@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from core.auth import (
     AuthenticatedPrincipal,
     get_current_principal,
-    verify_session_token,
+    require_session_access,
 )
 from core.config import settings
 from db.cache import build_cache_key, cache_get, cache_set
@@ -37,20 +37,9 @@ router = APIRouter()
 )
 async def simulate(
     request: SimulationRequest,
-    principal: AuthenticatedPrincipal = Depends(get_current_principal),
-    x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
+    principal: AuthenticatedPrincipal = Depends(require_session_access),
 ) -> Dict[str, Any]:
-    token_value = x_session_token if isinstance(x_session_token, str) else None
-
-    if settings.AUTH_ENABLED:
-        if not token_value:
-            raise HTTPException(status_code=401, detail="X-Session-Token header is required")
-
-        verify_session_token(
-            token=token_value,
-            session_id=request.session_id,
-            user_id=principal.user_id,
-        )
+    del principal
 
     # Load cached analysis results
     cache_key = build_cache_key("analysis", request.session_id)
