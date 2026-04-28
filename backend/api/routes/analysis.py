@@ -28,6 +28,7 @@ from core.auth import (
     require_session_access,
 )
 from core.config import settings
+from core.security import validate_uploaded_document
 from db.cache import build_cache_key, cache_get, cache_set, get_cache_metrics
 from db.database import get_db
 from db.models import AnalysisSession, AuditLog, GapAnalysis, LearningPath, SkillProfile
@@ -88,15 +89,6 @@ async def analyze(
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
 ) -> AnalysisCompleteResponse:
-
-    # Validate file type
-    ext = (resume.filename or "").rsplit(".", 1)[-1].lower()
-    if ext not in settings.ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Unsupported file type '{ext}'. Allowed: {settings.ALLOWED_EXTENSIONS}",
-        )
-
     # Read and validate file size
     file_bytes = await resume.read()
     if len(file_bytes) > MAX_UPLOAD_BYTES:
@@ -106,6 +98,13 @@ async def analyze(
         )
     if len(file_bytes) < 100:
         raise HTTPException(status_code=422, detail="File appears to be empty or corrupted")
+
+
+    validate_uploaded_document(
+        filename=resume.filename or "resume",
+        content_type=resume.content_type,
+        file_bytes=file_bytes,
+    )
 
     # Build request object
     request = AnalyzeRequest(
