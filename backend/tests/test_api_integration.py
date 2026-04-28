@@ -30,6 +30,7 @@ if "engines.rag.rag_engine" not in sys.modules:
 from api.routes import analysis as analysis_route
 from api.routes import simulation as simulation_route
 from core.auth import AuthenticatedPrincipal
+from core.auth import issue_session_token
 from core.config import settings
 from schemas.schemas import SessionStatus
 
@@ -152,7 +153,7 @@ def test_post_analyze_happy_path(monkeypatch):
     with TestClient(app) as client:
         response = client.post(
             '/api/v1/analyze',
-            files={'resume': ('resume.txt', b'x' * 220, 'text/plain')},
+            files={'resume': ('resume.txt', b'x' * 220 + b' contact hidden@example.com', 'text/plain')},
             data={
                 'jd_text': 'Senior backend engineer with strong Python, SQL, API design, and Docker expertise.',
             },
@@ -177,7 +178,7 @@ def test_post_analyze_rejects_invalid_upload_type(monkeypatch):
     with TestClient(app) as client:
         response = client.post(
             '/api/v1/analyze',
-            files={'resume': ('malware.exe', b'bad', 'application/octet-stream')},
+            files={'resume': ('malware.exe', b'x' * 220, 'application/octet-stream')},
             data={
                 'jd_text': 'Senior backend engineer with strong Python, SQL, API design, and Docker expertise.',
             },
@@ -236,6 +237,30 @@ def test_post_analyze_rejects_near_empty_upload(monkeypatch):
     assert 'empty or corrupted' in response.json()['detail']
 
 
+def test_post_analyze_rejects_invalid_pdf_payload(monkeypatch):
+    class _FakeService:
+        async def create_session(self, **kwargs):
+            return SimpleNamespace(id='s1')
+
+        async def run_analysis(self, **kwargs):
+            return _analysis_payload('s1')
+
+    monkeypatch.setattr(analysis_route, 'get_analysis_service', lambda: _FakeService())
+
+    app = _build_app()
+    with TestClient(app) as client:
+        response = client.post(
+            '/api/v1/analyze',
+            files={'resume': ('resume.pdf', b'x' * 220, 'application/pdf')},
+            data={
+                'jd_text': 'Senior backend engineer with strong Python, SQL, API design, and Docker expertise.',
+            },
+        )
+
+    assert response.status_code == 422
+    assert 'valid PDF' in response.json()['detail']
+
+
 def test_get_results_uses_cached_payload(monkeypatch):
     payload = _analysis_payload('cached-s1')
 
@@ -250,6 +275,17 @@ def test_get_results_uses_cached_payload(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()['session_id'] == 'cached-s1'
+
+
+def test_get_results_requires_session_token_without_global_auth(monkeypatch):
+    monkeypatch.setattr(settings, 'AUTH_ENABLED', False)
+
+    app = _build_auth_enforced_app()
+    with TestClient(app) as client:
+        response = client.get('/api/v1/results/s1')
+
+    assert response.status_code == 401
+    assert 'X-Session-Token header is required' in response.json()['detail']
 
 
 def test_get_results_requires_session_token_when_auth_enabled(monkeypatch):
@@ -350,9 +386,11 @@ def test_post_simulate_recomputes_path(monkeypatch):
     monkeypatch.setattr(simulation_route, 'get_rag_engine', lambda: _FakeRagEngine())
 
     app = _build_app()
+    session_token = issue_session_token('s1', 'test-user')
     with TestClient(app) as client:
         response = client.post(
             '/api/v1/simulate',
+            headers={'X-Session-Token': session_token},
             json={
                 'session_id': 's1',
                 'time_constraint_weeks': 8,
