@@ -92,9 +92,12 @@ def require_session_access(
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
     x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
 ) -> AuthenticatedPrincipal:
-    if settings.AUTH_ENABLED:
-        if not x_session_token:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-Session-Token header is required")
-        verify_session_token(x_session_token, session_id=session_id, user_id=principal.user_id)
+    if not x_session_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="X-Session-Token header is required",
+        )
+
+    verify_session_token(x_session_token, session_id=session_id, user_id=principal.user_id)
 
     return principal
