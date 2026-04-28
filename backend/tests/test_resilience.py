@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from core.errors import RequestTimeoutError
+from core.errors import EngineValidationError, RequestTimeoutError
 from core.resilience import run_with_resilience
 
 
@@ -12,7 +12,7 @@ def test_run_with_resilience_retries_transient_errors_then_succeeds():
     async def flaky_operation():
         state["attempts"] += 1
         if state["attempts"] < 3:
-            raise ValueError("transient failure")
+            raise ConnectionError("transient failure")
         return "ok"
 
     result = asyncio.run(
@@ -21,7 +21,8 @@ def test_run_with_resilience_retries_transient_errors_then_succeeds():
             func=flaky_operation,
             timeout_seconds=1,
             retries=3,
-            retry_on=(ValueError,),
+            retry_budget_seconds=5,
+            retry_on=(ConnectionError,),
         )
     )
 
@@ -43,3 +44,23 @@ def test_run_with_resilience_raises_timeout_error():
                 retries=1,
             )
         )
+
+
+def test_run_with_resilience_treats_validation_errors_as_non_retryable():
+    state = {"attempts": 0}
+
+    async def invalid_operation():
+        state["attempts"] += 1
+        raise ValueError("bad input")
+
+    with pytest.raises(EngineValidationError):
+        asyncio.run(
+            run_with_resilience(
+                operation_name="test.resilience.validation",
+                func=invalid_operation,
+                timeout_seconds=1,
+                retries=3,
+            )
+        )
+
+    assert state["attempts"] == 1

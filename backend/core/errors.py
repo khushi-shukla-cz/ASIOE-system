@@ -12,6 +12,7 @@ class ErrorCode(str, Enum):
     VALIDATION_ERROR = "VALIDATION_ERROR"
     RATE_LIMITED = "RATE_LIMITED"
     ENGINE_ERROR = "ENGINE_ERROR"
+    UPSTREAM_ERROR = "UPSTREAM_ERROR"
     INFRA_ERROR = "INFRA_ERROR"
     TIMEOUT_ERROR = "TIMEOUT_ERROR"
     INTERNAL_ERROR = "INTERNAL_ERROR"
@@ -42,10 +43,30 @@ class EngineExecutionError(AppError):
         )
 
 
+class EngineValidationError(AppError):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(
+            code=ErrorCode.VALIDATION_ERROR,
+            message=message,
+            details=details,
+            status_code=422,
+        )
+
+
 class InfraDependencyError(AppError):
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(
             code=ErrorCode.INFRA_ERROR,
+            message=message,
+            details=details,
+            status_code=503,
+        )
+
+
+class UpstreamDependencyError(AppError):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(
+            code=ErrorCode.UPSTREAM_ERROR,
             message=message,
             details=details,
             status_code=503,
