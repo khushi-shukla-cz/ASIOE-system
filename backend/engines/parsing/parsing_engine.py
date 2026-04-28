@@ -319,7 +319,7 @@ class ParsingEngine:
         parsed, in_tokens, out_tokens = await self.llm.extract_structured(prompt)
 
         result = self._validate_jd_extraction(parsed)
-        result["jd_hash"] = hashlib.md5(jd_text.encode()).hexdigest()
+        result["jd_hash"] = hashlib.sha256(jd_text.encode("utf-8")).hexdigest()
         result["processing_ms"] = int((time.perf_counter() - start) * 1000)
         result["input_tokens"] = in_tokens
         result["output_tokens"] = out_tokens
