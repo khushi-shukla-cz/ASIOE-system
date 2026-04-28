@@ -1,9 +1,33 @@
-import axios from 'axios'
+import axios, { AxiosHeaders } from 'axios'
 import type { AnalysisResult, SimulationResponse } from '@/types'
+
+const SESSION_TOKEN_STORAGE_KEY = 'asioe_session_token'
+
+export function getSessionToken() {
+  return localStorage.getItem(SESSION_TOKEN_STORAGE_KEY)
+}
+
+export function setSessionToken(token: string) {
+  localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token)
+}
+
+export function clearSessionToken() {
+  localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY)
+}
 
 const api = axios.create({
   baseURL: '/api',
   timeout: 120_000, // 2 min — LLM inference takes time
+})
+
+api.interceptors.request.use((config) => {
+  const token = getSessionToken()
+  if (token) {
+    const headers = AxiosHeaders.from(config.headers)
+    headers.set('X-Session-Token', token)
+    config.headers = headers
+  }
+  return config
 })
 
 // ── Interceptors ──────────────────────────────────────────────────────────────
@@ -55,6 +79,10 @@ export async function runAnalysis(
     const res = await api.post<AnalysisResult>('/v1/analyze', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+    const sessionToken = res.headers['x-session-token']
+    if (typeof sessionToken === 'string' && sessionToken) {
+      setSessionToken(sessionToken)
+    }
     clearInterval(progressInterval)
     onProgress?.(100, 'Analysis complete!')
     return res.data
