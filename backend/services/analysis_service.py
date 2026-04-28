@@ -8,29 +8,23 @@ Handles session management, error recovery, and audit logging.
 """
 from __future__ import annotations
 
-import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional
 
 import structlog
 from core.config import settings
-from core.resilience import run_with_resilience
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.cache import build_cache_key, cache_get, cache_set
 from db.models import AnalysisSession, AuditLog, GapAnalysis, LearningPath, SkillProfile
-from engines.explainability.explainability_engine import get_explainability_engine
-from engines.gap.gap_engine import get_gap_engine
-from engines.parsing.parsing_engine import get_parsing_engine
-from engines.path.path_engine import get_path_engine
-from engines.rag.rag_engine import get_rag_engine
 from schemas.schemas import (
     AnalysisCompleteResponse,
     AnalyzeRequest,
     SessionResponse,
     SessionStatus,
 )
+from services.analysis_workflow import AnalysisPipelineInput, get_analysis_workflow
 
 logger = structlog.get_logger(__name__)
 
@@ -71,9 +65,6 @@ class AnalysisService:
         Execute the full analysis pipeline end-to-end.
         Updates session status throughout and persists all results.
         """
-        pipeline_start = time.perf_counter()
-        total_tokens = 0
-
         # Check cache first
         cache_key = build_cache_key("analysis", session_id)
         cached = await cache_get(cache_key)
@@ -84,119 +75,39 @@ class AnalysisService:
         await self._update_session_status(db, session_id, SessionStatus.PROCESSING)
 
         try:
-            # ── Engine 1: Parse Resume ────────────────────────────────────────
-            t0 = time.perf_counter()
-            parsing_engine = get_parsing_engine()
-            resume_data = await run_with_resilience(
-                operation_name="parsing.parse_resume",
-                func=lambda: parsing_engine.parse_resume(file_bytes, filename),
-            )
-            jd_data = await run_with_resilience(
-                operation_name="parsing.parse_jd",
-                func=lambda: parsing_engine.parse_jd(request.jd_text),
-            )
-            total_tokens += resume_data.get("input_tokens", 0) + resume_data.get("output_tokens", 0)
-            total_tokens += jd_data.get("input_tokens", 0) + jd_data.get("output_tokens", 0)
-            await self._log_audit(db, session_id, "parsing_engine", "parse_resume_jd",
-                                  int((time.perf_counter()-t0)*1000), True)
-
-            # Enrich with target role from JD if not provided
-            if not request.target_role:
-                request.target_role = jd_data.get("target_role", "Target Role")
-
-            # ── Engine 2: Gap Analysis ────────────────────────────────────────
-            t0 = time.perf_counter()
-            gap_engine = get_gap_engine()
-            gap_result = await run_with_resilience(
-                operation_name="gap.analyze",
-                func=lambda: gap_engine.analyze(session_id, resume_data, jd_data),
-            )
-            await self._log_audit(db, session_id, "gap_engine", "gap_analysis",
-                                  int((time.perf_counter()-t0)*1000), True)
-
-            # ── Engine 3: Adaptive Path ───────────────────────────────────────
-            t0 = time.perf_counter()
-            path_engine = get_path_engine()
-            candidate_skill_ids: Set[str] = {
-                s.get("canonical_skill_id", "")
-                for s in resume_data.get("skills", [])
-            } - {""}
-
-            path_result = await run_with_resilience(
-                operation_name="path.generate",
-                func=lambda: path_engine.generate_path(
-                    session_id=session_id,
-                    gap_analysis=gap_result,
-                    candidate_skill_ids=candidate_skill_ids,
-                    max_modules=request.max_modules,
-                    time_constraint_weeks=request.time_constraint_weeks,
-                ),
-            )
-            # Set target role on path
-            path_result.target_role = request.target_role or "Target Role"
-            await self._log_audit(db, session_id, "path_engine", "generate_path",
-                                  int((time.perf_counter()-t0)*1000), True)
-
-            # ── Engine 4: RAG Course Enrichment ──────────────────────────────
-            t0 = time.perf_counter()
-            rag_engine = get_rag_engine()
-            all_modules = [m for phase in path_result.phases for m in phase.modules]
-            enriched_modules = await run_with_resilience(
-                operation_name="rag.enrich_modules",
-                func=lambda: rag_engine.enrich_modules(all_modules),
+            workflow = get_analysis_workflow()
+            analysis_input = AnalysisPipelineInput.from_request(request)
+            pipeline_result = await workflow.execute(
+                session_id=session_id,
+                file_bytes=file_bytes,
+                filename=filename,
+                analysis_input=analysis_input,
             )
 
-            # Re-assign enriched modules back to phases
-            module_map = {m.module_id: m for m in enriched_modules}
-            for phase in path_result.phases:
-                phase.modules = [module_map.get(m.module_id, m) for m in phase.modules]
-
-            await self._log_audit(db, session_id, "rag_engine", "enrich_modules",
-                                  int((time.perf_counter()-t0)*1000), True)
-
-            # ── Engine 5: Explainability ──────────────────────────────────────
-            t0 = time.perf_counter()
-            explain_engine = get_explainability_engine()
-            trace = await run_with_resilience(
-                operation_name="explainability.generate_trace",
-                func=lambda: explain_engine.generate_system_trace(
-                    session_id=session_id,
-                    parsing_data={"resume": resume_data, "jd": jd_data},
-                    gap_analysis=gap_result,
-                    path=path_result,
-                    total_tokens=total_tokens,
-                ),
+            await self._log_audit(
+                db,
+                session_id,
+                "analysis_workflow",
+                "pipeline_execute",
+                int(pipeline_result.processing_time_ms),
+                True,
             )
-            await self._log_audit(db, session_id, "explainability_engine", "system_trace",
-                                  int((time.perf_counter()-t0)*1000), True)
 
             # ── Persist to PostgreSQL ─────────────────────────────────────────
             await self._persist_results(
-                db, session_id, resume_data, gap_result, path_result
+                db, session_id, pipeline_result
             )
 
             await self._update_session_status(db, session_id, SessionStatus.COMPLETED)
 
-            total_ms = (time.perf_counter() - pipeline_start) * 1000
-
             response = AnalysisCompleteResponse(
                 session_id=session_id,
                 status=SessionStatus.COMPLETED,
-                skill_profile={
-                    "candidate_name": resume_data.get("candidate_name"),
-                    "current_role": resume_data.get("current_role"),
-                    "years_of_experience": resume_data.get("years_of_experience"),
-                    "education_level": resume_data.get("education_level"),
-                    "skills": resume_data.get("skills", [])[:30],
-                    "certifications": resume_data.get("certifications", []),
-                    "parsing_confidence": resume_data.get("parsing_confidence", 0),
-                    "target_role": request.target_role,
-                    "jd_required_skills": jd_data.get("required_skills", []),
-                },
-                gap_analysis=gap_result,
-                learning_path=path_result,
-                reasoning_trace=trace,
-                processing_time_ms=round(total_ms, 2),
+                skill_profile=pipeline_result.skill_profile,
+                gap_analysis=pipeline_result.gap_result,
+                learning_path=pipeline_result.path_result,
+                reasoning_trace=pipeline_result.reasoning_trace,
+                processing_time_ms=pipeline_result.processing_time_ms,
             )
 
             # Cache result (60 min TTL)
@@ -205,9 +116,9 @@ class AnalysisService:
             logger.info(
                 "analysis.complete",
                 session_id=session_id,
-                total_ms=round(total_ms),
-                modules=path_result.total_modules,
-                readiness=gap_result.overall_readiness_score,
+                total_ms=round(pipeline_result.processing_time_ms),
+                modules=pipeline_result.path_result.total_modules,
+                readiness=pipeline_result.gap_result.overall_readiness_score,
             )
             return response
 
@@ -233,10 +144,12 @@ class AnalysisService:
         self,
         db: AsyncSession,
         session_id: str,
-        resume_data: Dict,
-        gap_result: Any,
-        path_result: Any,
+        pipeline_result: "AnalysisPipelineResult",
     ) -> None:
+        resume_data = pipeline_result.resume_data
+        gap_result = pipeline_result.gap_result
+        path_result = pipeline_result.path_result
+
         # Skill Profile
         profile = SkillProfile(
             session_id=session_id,
