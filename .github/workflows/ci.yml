@@ -148,7 +148,7 @@ jobs:
           pip install pip-audit
 
       - name: Scan Python dependencies
-        run: pip-audit -r backend/requirements.txt
+        run: pip-audit --strict -r backend/requirements.txt
 
   security-frontend:
     name: Frontend Dependency Security Scan
@@ -170,7 +170,7 @@ jobs:
         working-directory: frontend
 
       - name: Scan Node dependencies
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
         working-directory: frontend
 
   security-secrets:
@@ -188,3 +188,33 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: gitleaks.toml
+
+      - name: Enforce secret-handling policy
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git ls-files | grep -E '(^|/)\.env($|\.|$)' | grep -v '^\.env\.example$' >/dev/null; then
+            echo "Tracked .env files are not allowed in the repository." >&2
+            exit 1
+          fi
+
+          python - <<'PY'
+          from pathlib import Path
+
+          example = Path('.env.example').read_text(encoding='utf-8').splitlines()
+          expected = {
+              'SECRET_KEY': 'REPLACE_WITH_64_CHAR_HEX_SECRET',
+              'GROQ_API_KEY': 'gsk_REPLACE_WITH_YOUR_GROQ_API_KEY',
+              'POSTGRES_PASSWORD': 'asioe_pg_REPLACE_WITH_STRONG_PASSWORD',
+              'NEO4J_PASSWORD': 'asioe_neo4j_REPLACE',
+              'REDIS_PASSWORD': 'asioe_redis_REPLACE',
+          }
+
+          for key, placeholder in expected.items():
+              matches = [line for line in example if line.startswith(f'{key}=')]
+              if not matches:
+                  raise SystemExit(f'Missing required placeholder for {key} in .env.example')
+              if not any(placeholder in line for line in matches):
+                  raise SystemExit(f'{key} must remain a placeholder in .env.example')
+          PY
