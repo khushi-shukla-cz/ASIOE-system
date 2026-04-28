@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 from fastapi import HTTPException
 
-from core.auth import get_current_principal, issue_session_token, verify_session_token
+from core.auth import get_current_principal, issue_session_token, require_session_access, verify_session_token
+from core.auth import AuthenticatedPrincipal, get_current_principal, issue_session_token, require_session_access, verify_session_token
 from core.config import settings
 
 
@@ -40,3 +41,16 @@ def test_get_current_principal_defaults_when_auth_disabled(monkeypatch):
 
     principal = get_current_principal(x_api_key=None, x_user_id=None)
     assert principal.user_id == "anonymous"
+
+
+def test_require_session_access_requires_token(monkeypatch):
+    monkeypatch.setattr(settings, "AUTH_ENABLED", False)
+
+    with pytest.raises(HTTPException) as exc:
+        require_session_access(
+            session_id="session-1",
+            principal=AuthenticatedPrincipal(user_id="anonymous"),
+            x_session_token=None,
+        )
+
+    assert exc.value.status_code == 401
