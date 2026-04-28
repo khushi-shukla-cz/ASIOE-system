@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from core.config import settings
+from core.logging import sanitize_log_event
 from core.security import RateLimitMiddleware, SecurityHeadersMiddleware
 import core.security as security_module
 
@@ -97,3 +98,22 @@ def test_rate_limit_memory_fallback_when_redis_unavailable(monkeypatch):
 
     assert r1.status_code == 200
     assert r2.status_code == 429
+
+
+def test_sanitize_log_event_redacts_pii_and_tokens():
+    sanitized = sanitize_log_event({
+        "candidate_name": "Khushi Shukla",
+        "candidate_email": "khushi@example.com",
+        "error": "contact khushi@example.com for details",
+        "auth_token": "abc123",
+        "nested": {
+            "jd_text": "Reach me at hr@example.com",
+            "count": 2,
+        },
+    })
+
+    assert sanitized["candidate_name"] == "[REDACTED]"
+    assert sanitized["candidate_email"] == "[REDACTED]"
+    assert sanitized["auth_token"] == "[REDACTED]"
+    assert sanitized["error"] == "contact [REDACTED_EMAIL] for details"
+    assert sanitized["nested"]["jd_text"] == "[REDACTED]"
