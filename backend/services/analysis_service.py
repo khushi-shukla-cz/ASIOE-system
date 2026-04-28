@@ -45,7 +45,7 @@ class AnalysisService:
             id=str(uuid.uuid4()),
             status=SessionStatus.PENDING,
             resume_filename=resume_filename,
-            jd_text_hash=hashlib.md5(jd_text.encode()).hexdigest(),
+            jd_text_hash=hashlib.sha256(jd_text.encode("utf-8")).hexdigest(),
             target_role=target_role,
         )
         db.add(session)
