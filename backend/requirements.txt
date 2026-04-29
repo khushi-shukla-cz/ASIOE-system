@@ -53,9 +53,17 @@ pydantic==2.8.2
 pydantic-settings==2.3.4
 email-validator==2.2.0
 
-# Observability
+# Observability & Distributed Tracing
 structlog==24.2.0
 prometheus-fastapi-instrumentator==7.0.0
+opentelemetry-api==1.24.0
+opentelemetry-sdk==1.24.0
+opentelemetry-exporter-jaeger-thrift==1.24.0
+opentelemetry-exporter-prometheus==0.45b0
+opentelemetry-instrumentation-fastapi==0.45b0
+opentelemetry-instrumentation-sqlalchemy==0.45b0
+opentelemetry-instrumentation-redis==0.45b0
+opentelemetry-instrumentation-requests==0.45b0
 
 # Async Utilities
 aiofiles==23.2.1
