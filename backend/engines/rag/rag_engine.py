@@ -22,6 +22,7 @@ import structlog
 from sentence_transformers import SentenceTransformer
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 from schemas.schemas import LearningModule
 
 logger = structlog.get_logger(__name__)
@@ -169,6 +170,7 @@ class RAGEngine:
 
         self._initialized = True
 
+    @trace_engine_operation("rag", "enrich_modules")
     async def enrich_modules(
         self, modules: List[LearningModule]
     ) -> List[LearningModule]:
