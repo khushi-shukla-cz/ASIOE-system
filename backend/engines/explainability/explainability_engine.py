@@ -23,6 +23,7 @@ import structlog
 from groq import AsyncGroq
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 from schemas.schemas import (
     GapAnalysisResult,
     LearningPathResult,
@@ -61,6 +62,7 @@ class ExplainabilityEngine:
     def __init__(self) -> None:
         self.llm = AsyncGroq(api_key=settings.GROQ_API_KEY)
 
+    @trace_engine_operation("explainability", "generate_node_explanations")
     async def generate_node_explanations(
         self,
         path: LearningPathResult,
@@ -99,6 +101,7 @@ class ExplainabilityEngine:
 
         return explanations
 
+    @trace_engine_operation("explainability", "generate_system_trace")
     async def generate_system_trace(
         self,
         session_id: str,
