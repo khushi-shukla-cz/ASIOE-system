@@ -31,6 +31,7 @@ import networkx as nx
 import structlog
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 from engines.skill_graph.skill_graph_engine import get_skill_graph_engine
 from schemas.schemas import (
     DifficultyLevel,
@@ -61,6 +62,7 @@ class AdaptivePathEngine:
     def __init__(self) -> None:
         self.graph_engine = get_skill_graph_engine()
 
+    @trace_engine_operation("path", "generate_path")
     async def generate_path(
         self,
         session_id: str,
