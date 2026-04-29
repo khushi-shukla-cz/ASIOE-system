@@ -25,6 +25,7 @@ import structlog
 from groq import AsyncGroq
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 
 logger = structlog.get_logger(__name__)
 
@@ -262,6 +263,7 @@ class ParsingEngine:
         self.extractor = TextExtractor()
         self.llm = LLMExtractor()
 
+    @trace_engine_operation("parsing", "parse_resume")
     async def parse_resume(
         self,
         file_bytes: bytes,
@@ -310,6 +312,7 @@ class ParsingEngine:
         )
         return result
 
+    @trace_engine_operation("parsing", "parse_jd")
     async def parse_jd(self, jd_text: str) -> Dict[str, Any]:
         """Parse a job description and extract required/preferred skills."""
         start = time.perf_counter()
