@@ -22,6 +22,7 @@ from groq import AsyncGroq
 from sklearn.metrics.pairwise import cosine_similarity
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 from engines.normalization.normalization_engine import get_normalization_engine
 from schemas.schemas import DomainCoverage, GapAnalysisResult, GapSeverity, SkillGap
 
@@ -77,6 +78,7 @@ class GapAnalysisEngine:
         self.normalizer = get_normalization_engine()
         self.llm = AsyncGroq(api_key=settings.GROQ_API_KEY)
 
+    @trace_engine_operation("gap", "analyze")
     async def analyze(
         self,
         session_id: str,
