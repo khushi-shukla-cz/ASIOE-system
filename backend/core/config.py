@@ -118,11 +118,15 @@ class Settings(BaseSettings):
     ALLOWED_EXTENSIONS: List[str] = ["pdf", "docx", "txt"]
     UPLOAD_DIR: str = "/tmp/asioe_uploads"
 
-    # ── Observability ─────────────────────────────────────────────────────────
+    # ── Observability — Distributed Tracing ─────────────────────────────────────
     LOG_LEVEL: str = "INFO"
     ENABLE_METRICS: bool = True
+    ENABLE_DISTRIBUTED_TRACING: bool = True
+    JAEGER_HOST: str = "jaeger"
+    JAEGER_PORT: int = 6831
     SENTRY_DSN: Optional[str] = None
     CORRELATION_HEADER_NAME: str = "X-Correlation-ID"
+    TRACE_HEADER_NAME: str = "X-Trace-ID"
 
     # -- API Security --
     SECURITY_HEADERS_ENABLED: bool = True
