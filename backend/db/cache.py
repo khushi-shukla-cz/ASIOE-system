@@ -85,6 +85,11 @@ def build_cache_key(*parts: str) -> str:
     return "asioe:" + ":".join(str(p) for p in parts)
 
 
+def get_cache_stats() -> Dict[str, float]:
+    """Get raw cache statistics for observability."""
+    return _cache_stats.copy()
+
+
 def get_cache_metrics() -> Dict[str, float]:
     hits = int(_cache_stats["hits"])
     misses = int(_cache_stats["misses"])
