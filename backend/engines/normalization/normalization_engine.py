@@ -21,6 +21,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from core.config import settings
+from engines.instrumentation import trace_engine_operation
 
 logger = structlog.get_logger(__name__)
 
@@ -166,6 +167,7 @@ class SkillNormalizationEngine:
         logger.debug("normalization.no_match", skill=skill_name, best_score=best_score)
         return synthetic_id, best_score
 
+    @trace_engine_operation("normalization", "normalize_skill_list")
     def normalize_skill_list(
         self, skills: List[Dict]
     ) -> List[Dict]:
