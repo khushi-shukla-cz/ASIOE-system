@@ -23,7 +23,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from api.routes import analysis, health, simulation
+from api.routes import analysis, health, simulation, observability
 from core.config import settings
 from core.errors import (
     AppError,
@@ -31,6 +31,7 @@ from core.errors import (
     build_error_response,
 )
 from core.logging import configure_logging
+from core.observability import init_tracing, init_tracing_middleware, set_trace_id
 from core.security import RateLimitMiddleware, SecurityHeadersMiddleware
 from db.cache import close_redis, get_redis
 from db.database import close_db, init_db
@@ -39,6 +40,11 @@ from db.neo4j_manager import neo4j_manager
 # Configure logging before anything else
 configure_logging()
 logger = structlog.get_logger(__name__)
+
+# Initialize distributed tracing
+if settings.ENABLE_DISTRIBUTED_TRACING:
+    init_tracing()
+    logger.info("observability.tracing_enabled", backend="jaeger")
 
 
 @asynccontextmanager
@@ -123,10 +129,18 @@ def create_app() -> FastAPI:
             or request.headers.get("X-Request-ID")
             or str(uuid.uuid4())
         )
+        
+        # Also set trace ID for distributed tracing
+        trace_id = request.headers.get(settings.TRACE_HEADER_NAME) or str(uuid.uuid4())
+        set_trace_id(trace_id)
 
         request.state.correlation_id = correlation_id
+        request.state.trace_id = trace_id
         structlog.contextvars.clear_contextvars()
-        structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+        structlog.contextvars.bind_contextvars(
+            correlation_id=correlation_id,
+            trace_id=trace_id
+        )
 
         start_time = time.perf_counter()
         try:
@@ -144,6 +158,7 @@ def create_app() -> FastAPI:
 
         duration_ms = (time.perf_counter() - start_time) * 1000
         response.headers[correlation_header] = correlation_id
+        response.headers[settings.TRACE_HEADER_NAME] = trace_id
         response.headers["X-Response-Time"] = f"{duration_ms:.2f}ms"
 
         logger.info(
@@ -164,6 +179,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/api", tags=["Health"])
     app.include_router(analysis.router, prefix="/api/v1", tags=["Analysis"])
     app.include_router(simulation.router, prefix="/api/v1", tags=["Simulation"])
+    app.include_router(observability.router, prefix="/api/v1", tags=["Observability"])
 
     # ── Exception Handlers ─────────────────────────────────────────────────────
     @app.exception_handler(RequestValidationError)
