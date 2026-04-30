@@ -7,8 +7,10 @@ import {
 import type { LearningPathResult, LearningModule, PathPhase } from '@/types'
 import { domainColors, difficultyColors, formatHours } from '@/utils/helpers'
 import { useStore } from '@/store/useStore'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 
-interface Props { path: LearningPathResult }
+interface Props { path?: LearningPathResult }
 
 function ModuleCard({ module, index }: { module: LearningModule; index: number }) {
   const [expanded, setExpanded] = useState(false)
@@ -217,6 +219,8 @@ function PhaseBlock({ phase, globalIndex }: { phase: PathPhase; globalIndex: num
 }
 
 export default function LearningPathView({ path }: Props) {
+  if (!path) return <LoadingSkeleton />
+
   let globalIndex = 0
 
   return (
