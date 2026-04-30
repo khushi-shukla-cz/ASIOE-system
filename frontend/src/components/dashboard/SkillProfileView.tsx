@@ -2,8 +2,10 @@ import { motion } from 'framer-motion'
 import { User, Briefcase, GraduationCap, Star, Shield } from 'lucide-react'
 import type { SkillProfile, ExtractedSkill } from '@/types'
 import { domainColors, difficultyColors, formatPercent } from '@/utils/helpers'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 
-interface Props { profile: SkillProfile }
+interface Props { profile?: SkillProfile }
 
 function SkillBadge({ skill }: { skill: ExtractedSkill }) {
   const dc = domainColors[skill.domain as keyof typeof domainColors] ?? domainColors.technical
@@ -55,6 +57,8 @@ function StatCard({
 }
 
 export default function SkillProfileView({ profile }: Props) {
+  if (!profile) return <LoadingSkeleton />
+
   const grouped = profile.skills.reduce<Record<string, ExtractedSkill[]>>((acc, s) => {
     const d = s.domain
     if (!acc[d]) acc[d] = []
