@@ -6,10 +6,12 @@ import {
 } from 'lucide-react'
 import type { SystemReasoningTrace, LearningPathResult } from '@/types'
 import { domainColors, difficultyColors } from '@/utils/helpers'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 
 interface Props {
-  trace: SystemReasoningTrace
-  path: LearningPathResult
+  trace?: SystemReasoningTrace
+  path?: LearningPathResult
 }
 
 const ENGINE_ICONS: Record<string, any> = {
@@ -65,6 +67,17 @@ function TraceBlock({ traceKey, text }: { traceKey: string; text: string }) {
 }
 
 export default function ExplainabilityConsole({ trace, path }: Props) {
+  if (!trace || !path) return <LoadingSkeleton />
+  if (!Array.isArray(path.phases)) {
+    return (
+      <ErrorState
+        type="error"
+        title="Explainability unavailable"
+        message="The explainability payload is incomplete. Please rerun analysis."
+      />
+    )
+  }
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedModuleIdx, setSelectedModuleIdx] = useState<number | null>(null)
 
