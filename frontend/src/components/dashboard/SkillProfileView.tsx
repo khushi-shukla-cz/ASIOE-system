@@ -58,6 +58,15 @@ function StatCard({
 
 export default function SkillProfileView({ profile }: Props) {
   if (!profile) return <LoadingSkeleton />
+  if (!Array.isArray(profile.skills)) {
+    return (
+      <ErrorState
+        type="error"
+        title="Skill profile unavailable"
+        message="The extracted profile payload is incomplete. Please rerun analysis."
+      />
+    )
+  }
 
   const grouped = profile.skills.reduce<Record<string, ExtractedSkill[]>>((acc, s) => {
     const d = s.domain
