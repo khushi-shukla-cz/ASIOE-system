@@ -4,6 +4,8 @@ import { ZoomIn, ZoomOut, Maximize2, Info } from 'lucide-react'
 import type { PathGraph, GraphNode, GraphEdge } from '@/types'
 import type { SkillDomain } from '@/types'
 import { domainGraphColors } from '@/utils/helpers'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 import { useStore } from '@/store/useStore'
 
 interface Props {
@@ -23,10 +25,15 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ node: GraphNode; x: number; y: number } | null>(null)
   const { selectedModuleId } = useStore()
+  const [renderError, setRenderError] = useState<string | null>(null)
+
+  if (!graph) return <LoadingSkeleton />
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return
     if (!graph.nodes.length) return
+
+    try {
 
     const container = containerRef.current
     const W = container.clientWidth
@@ -194,6 +201,9 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
     })
 
     return () => { simulation.stop() }
+    } catch (err: any) {
+      setRenderError(err?.message || 'Graph render failed')
+    }
   }, [graph])
 
   const handleZoom = (factor: number) => {
@@ -270,6 +280,12 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
             <Info size={24} className="text-slate-300 mx-auto mb-2" />
             <p className="text-sm text-slate-400">No graph data available</p>
           </div>
+        </div>
+      )}
+
+      {renderError && (
+        <div className="absolute inset-0 flex items-center justify-center p-6">
+          <ErrorState type="error" title="Graph failed to render" message={renderError} />
         </div>
       )}
     </div>
