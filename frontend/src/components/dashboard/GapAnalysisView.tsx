@@ -113,6 +113,15 @@ function GapCard({ gap, index }: { gap: SkillGap; index: number }) {
 
 export default function GapAnalysisView({ gap }: Props) {
   if (!gap) return <LoadingSkeleton />
+  if (!Array.isArray(gap.domain_coverage)) {
+    return (
+      <ErrorState
+        type="error"
+        title="Gap analysis unavailable"
+        message="The gap analysis response is incomplete. Please rerun analysis."
+      />
+    )
+  }
 
   const radarData = gap.domain_coverage.map(d => ({
     domain: d.domain.replace('_', ' '),
