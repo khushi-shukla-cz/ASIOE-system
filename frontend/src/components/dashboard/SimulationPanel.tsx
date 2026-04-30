@@ -6,6 +6,8 @@ import type { LearningPathResult } from '@/types'
 import { runSimulation } from '@/utils/api'
 import { useStore } from '@/store/useStore'
 import LearningPathView from '@/components/dashboard/LearningPathView'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 
 const DOMAINS = [
   'technical', 'analytical', 'leadership',
@@ -30,6 +32,10 @@ export default function SimulationPanel({ sessionId, originalPath }: Props) {
   const [priorityDomains, setPriorityDomains] = useState<string[]>([])
 
   const displayPath = simulationResult || originalPath
+
+  if (!displayPath) {
+    return <LoadingSkeleton />
+  }
 
   const toggleDomain = (domain: string) => {
     setPriorityDomains(prev =>
