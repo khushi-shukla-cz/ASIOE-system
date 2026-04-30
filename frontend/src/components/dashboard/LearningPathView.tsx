@@ -220,6 +220,15 @@ function PhaseBlock({ phase, globalIndex }: { phase: PathPhase; globalIndex: num
 
 export default function LearningPathView({ path }: Props) {
   if (!path) return <LoadingSkeleton />
+  if (!Array.isArray(path.phases)) {
+    return (
+      <ErrorState
+        type="error"
+        title="Learning path unavailable"
+        message="The generated learning path is incomplete. Please rerun analysis."
+      />
+    )
+  }
 
   let globalIndex = 0
 
