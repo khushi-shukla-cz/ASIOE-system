@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain, User, BarChart3, GitBranch, Network,
-  Terminal, Sliders, ArrowLeft,
+  Terminal, Sliders, ArrowLeft, Menu, X,
   CheckCircle, Clock, Zap, Layers
 } from 'lucide-react'
 import { useStore } from '@/store/useStore'
@@ -15,6 +15,7 @@ import ExplainabilityConsole from '@/components/explainability/ExplainabilityCon
 import SimulationPanel from '@/components/dashboard/SimulationPanel'
 import { formatPercent } from '@/utils/helpers'
 import { readinessColor } from '@/utils/helpers'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
 
 type Tab = 'profile' | 'gaps' | 'path' | 'graph' | 'explain' | 'simulate'
 
@@ -51,6 +52,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { result, sessionId, simulationResult, clearSimulationResult } = useStore()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (!result || !result.gap_analysis || !result.learning_path) {
     return <EmptyState />
@@ -121,12 +123,25 @@ export default function DashboardPage() {
               <span>{formatPercent(readiness)} ready</span>
             </div>
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={() => setSidebarOpen((s) => !s)}
+              className="p-2 rounded-md hover:bg-slate-100"
+              aria-label="Open navigation"
+              aria-expanded={sidebarOpen}
+              aria-controls="dashboard-sidebar"
+            >
+              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
         </div>
       </nav>
 
       <div className="pt-14 flex">
-        {/* Sidebar tabs */}
-        <aside className="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-52 bg-white border-r border-slate-100 flex flex-col py-4 px-3 z-40 overflow-y-auto">
+        {/* Desktop Sidebar (lg+) */}
+        <aside className="hidden lg:fixed lg:left-0 lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:w-52 lg:bg-white lg:border-r lg:border-slate-100 lg:flex lg:flex-col lg:py-4 lg:px-3 lg:z-40 lg:overflow-y-auto">
           {/* Role header */}
           <div className="px-2 mb-4">
             <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-0.5">
@@ -136,7 +151,7 @@ export default function DashboardPage() {
               {learning_path.target_role || 'Analyzed Role'}
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <div className="flex-1 progress-bar h-1.5">
+              <div className="flex-1 progress-bar h-1.5" aria-hidden>
                 <motion.div
                   className="progress-fill"
                   style={{ width: `${readiness * 100}%`, backgroundColor: rColor }}
@@ -155,7 +170,7 @@ export default function DashboardPage() {
           <div className="w-full h-px bg-slate-100 mb-3" />
 
           {/* Tab buttons */}
-          <nav className="space-y-1 flex-1">
+          <nav className="space-y-1 flex-1" role="tablist" aria-orientation="vertical">
             {TABS.map(tab => {
               const isActive = activeTab === tab.id
               return (
@@ -170,6 +185,9 @@ export default function DashboardPage() {
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
                     }
                   `}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`tab-panel-${tab.id}`}
                 >
                   <tab.icon size={15} className={isActive ? 'text-white' : 'text-slate-400'} />
                   <span className="font-medium">{tab.label}</span>
@@ -189,7 +207,7 @@ export default function DashboardPage() {
               { label: 'Minor', count: gap_analysis.minor_gaps.length, color: 'bg-sky-400' },
             ].map(({ label, count, color }) => (
               <div key={label} className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${color}`} />
+                <div className={`w-2 h-2 rounded-full ${color}`} aria-hidden />
                 <span className="text-xs text-slate-500 flex-1">{label}</span>
                 <span className="text-xs font-bold text-slate-700">{count}</span>
               </div>
@@ -197,8 +215,55 @@ export default function DashboardPage() {
           </div>
         </aside>
 
+        {/* Mobile Drawer (when open) */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.aside
+              id="dashboard-sidebar"
+              initial={{ x: -320, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -320, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed left-0 top-14 z-50 w-72 bg-white border-r border-slate-100 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 lg:hidden"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest mb-0.5">Target Role</p>
+                  <p className="text-sm font-semibold text-slate-800">{learning_path.target_role || 'Analyzed Role'}</p>
+                </div>
+                <button onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" className="p-1 rounded-md hover:bg-slate-50">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <nav className="space-y-2" role="tablist" aria-orientation="vertical">
+                {TABS.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setActiveTab(tab.id); setSidebarOpen(false) }}
+                    className={`w-full text-left px-3 py-2 rounded-md ${activeTab === tab.id ? 'bg-slate-100 font-semibold' : 'hover:bg-slate-50'}`}
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    aria-controls={`tab-panel-${tab.id}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <tab.icon size={14} />
+                      <span>{tab.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </nav>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Overlay for mobile drawer */}
+        {sidebarOpen && <div className="fixed inset-0 top-14 bg-black/20 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />} 
+
         {/* Main content */}
-        <main className="ml-52 flex-1 p-6 min-h-[calc(100vh-3.5rem)]">
+        <main className="ml-0 lg:ml-52 flex-1 p-6 min-h-[calc(100vh-3.5rem)]">
           {/* Tab header */}
           <div className="mb-6">
             {TABS.filter(t => t.id === activeTab).map(tab => (
@@ -218,53 +283,57 @@ export default function DashboardPage() {
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
             >
-              {activeTab === 'profile' && skill_profile && (
-                <SkillProfileView profile={skill_profile as any} />
+              {activeTab === 'profile' && (
+                skill_profile ? <SkillProfileView profile={skill_profile as any} /> : <LoadingSkeleton />
               )}
 
               {activeTab === 'gaps' && (
-                <GapAnalysisView gap={gap_analysis} />
+                gap_analysis ? <GapAnalysisView gap={gap_analysis} /> : <LoadingSkeleton />
               )}
 
               {activeTab === 'path' && (
-                <LearningPathView path={learning_path} />
+                learning_path ? <LearningPathView path={learning_path} /> : <LoadingSkeleton />
               )}
 
               {activeTab === 'graph' && (
-                <div className="card overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-slate-800 text-sm">Skill Knowledge Graph</h3>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        {learning_path.path_graph.nodes.length} nodes · {learning_path.path_graph.edges.length} edges
-                        · Drag to rearrange · Scroll to zoom
-                      </p>
+                learning_path?.path_graph ? (
+                  <div className="card overflow-hidden">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-slate-800 text-sm">Skill Knowledge Graph</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {learning_path.path_graph.nodes.length} nodes · {learning_path.path_graph.edges.length} edges
+                          · Drag to rearrange · Scroll to zoom
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span>Phase ① → ② → ③</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                      <span>Phase ① → ② → ③</span>
-                    </div>
+                    <SkillGraphD3
+                      graph={learning_path.path_graph}
+                      onNodeClick={(node) => setActiveTab('explain' as Tab)}
+                    />
                   </div>
-                  <SkillGraphD3
-                    graph={learning_path.path_graph}
-                    onNodeClick={(node) => {
-                      setActiveTab('explain' as Tab)
-                    }}
-                  />
-                </div>
+                ) : (
+                  <LoadingSkeleton />
+                )
               )}
 
-              {activeTab === 'explain' && reasoning_trace && (
-                <ExplainabilityConsole
-                  trace={reasoning_trace}
-                  path={learning_path}
-                />
+              {activeTab === 'explain' && (
+                reasoning_trace ? (
+                  <ExplainabilityConsole trace={reasoning_trace} path={learning_path} />
+                ) : (
+                  <LoadingSkeleton />
+                )
               )}
 
-              {activeTab === 'simulate' && sessionId && (
-                <SimulationPanel
-                  sessionId={sessionId}
-                  originalPath={learning_path}
-                />
+              {activeTab === 'simulate' && (
+                sessionId ? (
+                  <SimulationPanel sessionId={sessionId} originalPath={learning_path} />
+                ) : (
+                  <LoadingSkeleton />
+                )
               )}
             </motion.div>
           </AnimatePresence>

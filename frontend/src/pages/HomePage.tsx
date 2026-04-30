@@ -139,58 +139,70 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-cream">
+      {/* Skip to main content link */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-cream/80 backdrop-blur-md border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+      <nav
+        className="fixed top-0 w-full z-50 bg-cream/80 backdrop-blur-md border-b border-slate-100"
+        aria-label="Main navigation"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center" aria-hidden="true">
               <Brain size={16} className="text-white" />
             </div>
             <span className="font-display text-xl text-slate-800">ASIOE</span>
-          </div>
+          </a>
           <button
             onClick={() => navigate('/analyze')}
             className="btn-primary text-sm"
+            aria-label="Start a new analysis"
           >
             Start Analysis
-            <ArrowRight size={15} />
+            <ArrowRight size={15} aria-hidden="true" />
           </button>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-24 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <section
+        id="main-content"
+        className="pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 md:pb-24 px-4 sm:px-6"
+      >
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
           {/* Left */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: 'easeOut' }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-sage-100 rounded-full text-sage-700 text-xs font-medium mb-6">
-              <div className="w-1.5 h-1.5 rounded-full bg-sage-500 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-sage-100 rounded-full text-sage-700 text-xs font-medium mb-4 sm:mb-6">
+              <div className="w-1.5 h-1.5 rounded-full bg-sage-500 pulse-soft" aria-hidden="true" />
               Production-Grade AI System
             </div>
-            <h1 className="font-display text-5xl lg:text-6xl text-slate-900 mb-6 leading-tight">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl text-slate-900 mb-4 sm:mb-6 leading-tight">
               Adaptive Skill
               <br />
               <span className="text-sage-600 italic">Intelligence</span>
               <br />
               Engine
             </h1>
-            <p className="text-lg text-slate-500 mb-8 leading-relaxed max-w-lg">
+            <p className="text-base sm:text-lg text-slate-500 mb-6 sm:mb-8 leading-relaxed max-w-lg">
               Upload a resume. Paste a job description. Receive a scientifically computed,
               graph-based learning path that eliminates redundancy and targets exact competency gaps.
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <button
                 onClick={() => navigate('/analyze')}
-                className="btn-accent text-base px-8 py-4"
+                className="btn-accent text-base px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto"
               >
                 Analyze Now
-                <ArrowRight size={18} />
+                <ArrowRight size={18} aria-hidden="true" />
               </button>
-              <div className="text-sm text-slate-400">
+              <div className="text-xs sm:text-sm text-slate-400">
                 <span className="font-medium text-slate-600">42</span> skills ·{' '}
                 <span className="font-medium text-slate-600">7</span> engines ·{' '}
                 <span className="font-medium text-slate-600">17</span> courses
@@ -203,20 +215,21 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-            className="relative"
+            className="relative hidden lg:block"
           >
-            <div className="card p-6 rounded-3xl">
+            <div className="card p-4 sm:p-6 rounded-3xl">
               <div className="text-xs text-slate-400 font-mono mb-3 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-sage-400 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-sage-400 pulse-soft" aria-hidden="true" />
                 Skill Knowledge Graph — Live Preview
               </div>
               <FloatingGraph />
             </div>
-            {/* Floating badge */}
+            {/* Floating badges */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="absolute -right-4 top-12 card px-4 py-3 shadow-card-hover"
+              aria-label="Readiness score: 87 percent"
             >
               <div className="text-xs text-slate-400 mb-0.5">Readiness Score</div>
               <div className="text-2xl font-display text-sage-600">87%</div>
@@ -225,6 +238,7 @@ export default function HomePage() {
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
               className="absolute -left-4 bottom-16 card px-4 py-3 shadow-card-hover"
+              aria-label="Critical gaps: 3"
             >
               <div className="text-xs text-slate-400 mb-0.5">Critical Gaps</div>
               <div className="text-2xl font-display text-rose-500">3</div>
@@ -234,23 +248,23 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-6 bg-white border-t border-slate-100">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-t border-slate-100" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-14"
+            className="text-center mb-12 sm:mb-14"
           >
-            <h2 className="font-display text-4xl text-slate-800 mb-3">
+            <h2 id="features-heading" className="font-display text-3xl sm:text-4xl text-slate-800 mb-3">
               7 Engines. Zero Black Boxes.
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-slate-400 text-base sm:text-lg">
               Every decision traceable. Every recommendation grounded.
             </p>
           </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {features.map((f, i) => (
               <motion.div
                 key={f.title}
@@ -258,13 +272,16 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="card card-hover p-6"
+                className="card card-hover p-4 sm:p-6"
               >
-                <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-4`}>
+                <div
+                  className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center mb-4`}
+                  aria-hidden="true"
+                >
                   <f.icon size={20} className={f.color} />
                 </div>
-                <h3 className="font-semibold text-slate-800 mb-2">{f.title}</h3>
-                <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+                <h3 className="font-semibold text-slate-800 mb-2 text-sm sm:text-base">{f.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">{f.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -272,12 +289,12 @@ export default function HomePage() {
       </section>
 
       {/* Tech Stack */}
-      <section className="py-16 px-6">
+      <section className="py-12 sm:py-16 px-4 sm:px-6" aria-labelledby="tech-heading">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-xs text-slate-400 font-mono mb-6 uppercase tracking-widest">
+          <p id="tech-heading" className="text-center text-xs text-slate-400 font-mono mb-6 uppercase tracking-widest">
             Powered by
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
             {[
               'Llama-3.3-70B', 'FastAPI', 'Neo4j', 'FAISS', 'sentence-transformers',
               'NetworkX', 'PostgreSQL', 'Redis', 'React', 'Docker',
@@ -294,7 +311,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-100 py-8 px-6 text-center">
+      <footer className="border-t border-slate-100 py-6 sm:py-8 px-4 sm:px-6 text-center">
         <p className="text-xs text-slate-400 font-mono">
           ASIOE v1.0.0 · Adaptive Skill Intelligence & Optimization Engine · Production Release
         </p>

@@ -1,5 +1,5 @@
-from engines.gap.gap_engine import GapAnalysisEngine
-from schemas.schemas import DomainCoverage
+from engines.gap.gap_engine import GAP_SEVERITY_THRESHOLDS, GapAnalysisEngine
+from schemas.schemas import DomainCoverage, GapSeverity
 
 
 def test_classify_gaps_into_critical_major_minor():
@@ -91,3 +91,52 @@ def test_compute_readiness_score_never_goes_below_zero():
     )
 
     assert score == 0.0
+
+
+def test_classify_gaps_respects_severity_boundaries():
+    engine = GapAnalysisEngine()
+    gaps = [
+        {
+            "skill_id": "critical",
+            "skill_name": "Critical",
+            "domain": "technical",
+            "current_score": 0.0,
+            "required_score": 1.0,
+            "gap_delta": GAP_SEVERITY_THRESHOLDS[GapSeverity.CRITICAL],
+        },
+        {
+            "skill_id": "major",
+            "skill_name": "Major",
+            "domain": "technical",
+            "current_score": 0.3,
+            "required_score": 0.7,
+            "gap_delta": GAP_SEVERITY_THRESHOLDS[GapSeverity.MAJOR],
+        },
+        {
+            "skill_id": "minor",
+            "skill_name": "Minor",
+            "domain": "technical",
+            "current_score": 0.6,
+            "required_score": 0.8,
+            "gap_delta": GAP_SEVERITY_THRESHOLDS[GapSeverity.MINOR],
+        },
+    ]
+
+    critical, major, minor = engine._classify_gaps(gaps)
+
+    assert [g.skill_id for g in critical] == ["critical"]
+    assert [g.skill_id for g in major] == ["major"]
+    assert [g.skill_id for g in minor] == ["minor"]
+    assert critical[0].severity == GapSeverity.CRITICAL
+    assert major[0].severity == GapSeverity.MAJOR
+    assert minor[0].severity == GapSeverity.MINOR
+
+
+def test_readiness_label_boundaries_are_stable():
+    engine = GapAnalysisEngine()
+
+    assert engine._readiness_label(0.29) == "Significant Gap"
+    assert engine._readiness_label(0.30) == "Early Stage"
+    assert engine._readiness_label(0.50) == "Developing"
+    assert engine._readiness_label(0.70) == "Near-Ready"
+    assert engine._readiness_label(0.85) == "Role-Ready"
