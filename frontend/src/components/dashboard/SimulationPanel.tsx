@@ -33,8 +33,15 @@ export default function SimulationPanel({ sessionId, originalPath }: Props) {
 
   const displayPath = simulationResult || originalPath
 
-  if (!displayPath) {
-    return <LoadingSkeleton />
+  if (!displayPath) return <LoadingSkeleton />
+  if (!sessionId || !originalPath) {
+    return (
+      <ErrorState
+        type="error"
+        title="Simulation unavailable"
+        message="Simulation requires a valid session and original learning path."
+      />
+    )
   }
 
   const toggleDomain = (domain: string) => {
