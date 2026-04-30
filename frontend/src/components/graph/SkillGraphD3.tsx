@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
-import { ZoomIn, ZoomOut, Maximize2, Info } from 'lucide-react'
-import type { PathGraph, GraphNode, GraphEdge } from '@/types'
+import { ZoomIn, ZoomOut, Info } from 'lucide-react'
+import type { PathGraph, GraphNode } from '@/types'
 import type { SkillDomain } from '@/types'
 import { domainGraphColors } from '@/utils/helpers'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton'
 import ErrorState from '@/components/common/ErrorState'
-import { useStore } from '@/store/useStore'
 
 interface Props {
   graph: PathGraph
@@ -24,7 +23,6 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [tooltip, setTooltip] = useState<{ node: GraphNode; x: number; y: number } | null>(null)
-  const { selectedModuleId } = useStore()
   const [renderError, setRenderError] = useState<string | null>(null)
 
   if (!graph) return <LoadingSkeleton />
@@ -32,6 +30,7 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return
     if (!graph.nodes.length) return
+    setRenderError(null)
 
     try {
 
@@ -200,7 +199,7 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
       nodeG.attr('transform', d => `translate(${(d as any).x},${(d as any).y})`)
     })
 
-    return () => { simulation.stop() }
+      return () => { simulation.stop() }
     } catch (err: any) {
       setRenderError(err?.message || 'Graph render failed')
     }
