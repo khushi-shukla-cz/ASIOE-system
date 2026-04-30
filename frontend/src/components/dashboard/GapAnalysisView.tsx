@@ -6,8 +6,10 @@ import {
 import { AlertTriangle, TrendingUp, Minus, CheckCircle2, Quote } from 'lucide-react'
 import type { GapAnalysisResult, SkillGap } from '@/types'
 import { severityColors, readinessColor, formatPercent } from '@/utils/helpers'
+import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import ErrorState from '@/components/common/ErrorState'
 
-interface Props { gap: GapAnalysisResult }
+interface Props { gap?: GapAnalysisResult }
 
 function ReadinessMeter({ score, label }: { score: number; label: string }) {
   const color = readinessColor(score)
@@ -110,6 +112,8 @@ function GapCard({ gap, index }: { gap: SkillGap; index: number }) {
 }
 
 export default function GapAnalysisView({ gap }: Props) {
+  if (!gap) return <LoadingSkeleton />
+
   const radarData = gap.domain_coverage.map(d => ({
     domain: d.domain.replace('_', ' '),
     Candidate: Math.round(d.radar_value * 100),
