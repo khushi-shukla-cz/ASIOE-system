@@ -116,6 +116,17 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
       .enter()
       .append('g')
       .attr('class', 'node')
+      .attr('tabindex', 0)
+      .attr('role', 'button')
+      .attr('aria-label', d => {
+        const node = d as any
+        const label = node.label || 'Skill node'
+        const domain = node.domain ? String(node.domain).replace('_', ' ') : 'unknown domain'
+        const severity = node.gap_severity && node.gap_severity !== 'none'
+          ? `, ${node.gap_severity} gap`
+          : ''
+        return `${label}, ${domain}${severity}`
+      })
       .style('cursor', 'pointer')
       .call(
         d3.drag<SVGGElement, d3.SimulationNodeDatum>()
@@ -129,6 +140,12 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
             d.fx = null; d.fy = null
           })
       )
+      .on('keydown', (event, d) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onNodeClick?.(d as any)
+        }
+      })
 
     // Outer severity ring
     nodeG.append('circle')
@@ -149,7 +166,24 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
         d3.select(this).attr('fill-opacity', 0.3).attr('r', 22)
         setTooltip({ node: d as any, x: event.offsetX, y: event.offsetY })
       })
+      .on('focus', function (event, d) {
+        const target = this as SVGCircleElement
+        d3.select(target).attr('fill-opacity', 0.3).attr('r', 22)
+        const containerRect = containerRef.current?.getBoundingClientRect()
+        const nodeRect = (event.currentTarget as SVGCircleElement).getBoundingClientRect()
+        if (containerRect) {
+          setTooltip({
+            node: d as any,
+            x: nodeRect.left - containerRect.left,
+            y: nodeRect.top - containerRect.top,
+          })
+        }
+      })
       .on('mouseout', function () {
+        d3.select(this).attr('fill-opacity', 0.15).attr('r', 20)
+        setTooltip(null)
+      })
+      .on('blur', function () {
         d3.select(this).attr('fill-opacity', 0.15).attr('r', 20)
         setTooltip(null)
       })
@@ -241,9 +275,11 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
         ].map(({ icon: Icon, action, label }) => (
           <button
             key={label}
+            type="button"
             onClick={action}
             title={label}
-            className="w-8 h-8 card flex items-center justify-center hover:bg-slate-50 transition-colors"
+            aria-label={label}
+            className="w-8 h-8 card flex items-center justify-center hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-400"
           >
             <Icon size={14} className="text-slate-500" />
           </button>
@@ -251,7 +287,13 @@ export default function SkillGraphD3({ graph, onNodeClick }: Props) {
       </div>
 
       {/* SVG */}
-      <svg ref={svgRef} className="w-full rounded-xl bg-cream" style={{ height: 520 }} />
+      <svg
+        ref={svgRef}
+        className="w-full rounded-xl bg-cream"
+        style={{ height: 520 }}
+        role="img"
+        aria-label="Interactive skill dependency graph"
+      />
 
       {/* Tooltip */}
       {tooltip && (
