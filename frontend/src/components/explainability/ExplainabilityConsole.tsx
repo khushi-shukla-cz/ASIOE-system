@@ -26,6 +26,7 @@ function TraceBlock({ traceKey, text }: { traceKey: string; text: string }) {
   const meta = ENGINE_ICONS[traceKey]
   if (!meta) return null
   const { icon: Icon, label, color, bg } = meta
+  const panelId = `trace-panel-${traceKey}`
 
   return (
     <motion.div
@@ -34,8 +35,11 @@ function TraceBlock({ traceKey, text }: { traceKey: string; text: string }) {
       className="border border-slate-100 rounded-xl overflow-hidden"
     >
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-colors text-left"
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="w-full flex items-center gap-3 p-4 bg-white hover:bg-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-400"
       >
         <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
           <Icon size={15} className={color} />
@@ -49,6 +53,7 @@ function TraceBlock({ traceKey, text }: { traceKey: string; text: string }) {
       <AnimatePresence>
         {open && (
           <motion.div
+            id={panelId}
             initial={{ height: 0 }}
             animate={{ height: 'auto' }}
             exit={{ height: 0 }}
@@ -134,33 +139,41 @@ export default function ExplainabilityConsole({ trace, path }: Props) {
             Module-Level Explanations
           </h3>
           <div className="relative flex-1 max-w-xs">
+            <label htmlFor="module-search" className="sr-only">
+              Search modules
+            </label>
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
+              id="module-search"
               type="text"
               placeholder="Search skills..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="input-field pl-8 py-2 text-xs"
+              className="input-field pl-8 py-2 text-xs focus-visible:ring-2 focus-visible:ring-sage-400"
             />
           </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4">
           {/* Module list */}
-          <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
+          <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1" role="listbox" aria-label="Module list">
             {filtered.map((mod, i) => {
               const dc = domainColors[mod.domain as keyof typeof domainColors] ?? domainColors.technical
               const isSelected = selectedModuleIdx === allModules.indexOf(mod)
               return (
                 <button
                   key={mod.module_id}
+                  type="button"
                   onClick={() => setSelectedModuleIdx(allModules.indexOf(mod))}
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-label={`${mod.skill_name}, ${mod.domain.replace('_', ' ')}, sequence ${mod.sequence_order}`}
                   className={`
                     w-full text-left p-3 rounded-xl border transition-all duration-150
                     ${isSelected
                       ? 'bg-slate-800 border-slate-800 text-white'
                       : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
-                    }
+                    } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-400
                   `}
                 >
                   <div className="flex items-center gap-2">
@@ -189,6 +202,8 @@ export default function ExplainabilityConsole({ trace, path }: Props) {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
                 className="card p-5 space-y-4 sticky top-0"
+                role="region"
+                aria-label={`Details for ${selectedModule.skill_name}`}
               >
                 <div>
                   <p className="text-xs font-mono text-slate-400 uppercase tracking-wide">Module</p>
