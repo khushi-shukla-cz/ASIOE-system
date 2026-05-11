@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const { result, sessionId, simulationResult, clearSimulationResult } = useStore()
   const [activeTab, setActiveTab] = useState<Tab>('profile')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const activeTabMeta = useMemo(() => TABS.find(tab => tab.id === activeTab)!, [activeTab])
 
   if (!result || !result.gap_analysis || !result.learning_path) {
     return <EmptyState />
@@ -263,21 +264,51 @@ export default function DashboardPage() {
         {sidebarOpen && <div className="fixed inset-0 top-14 bg-black/20 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />} 
 
         {/* Main content */}
-        <main className="ml-0 lg:ml-52 flex-1 p-6 min-h-[calc(100vh-3.5rem)]">
+        <main className="ml-0 lg:ml-52 flex-1 p-4 sm:p-6 min-h-[calc(100vh-3.5rem)]">
+          {/* Mobile tab strip */}
+          <div className="lg:hidden mb-5 -mx-4 px-4 pb-1 overflow-x-auto">
+            <div className="flex gap-2 min-w-max" role="tablist" aria-label="Dashboard tabs">
+              {TABS.map(tab => {
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`tab-panel-${tab.id}`}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`
+                      flex items-center gap-2 px-3 py-2 rounded-full border text-sm whitespace-nowrap transition-colors
+                      ${isActive
+                        ? 'bg-slate-800 text-white border-slate-800'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                      } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-400
+                    `}
+                  >
+                    <tab.icon size={14} />
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Tab header */}
           <div className="mb-6">
-            {TABS.filter(t => t.id === activeTab).map(tab => (
-              <div key={tab.id}>
-                <h1 className="font-display text-2xl text-slate-900">{tab.label}</h1>
-                <p className="text-slate-400 text-sm mt-0.5">{tab.description}</p>
-              </div>
-            ))}
+            <div>
+              <h1 className="font-display text-2xl text-slate-900">{activeTabMeta.label}</h1>
+              <p className="text-slate-400 text-sm mt-0.5">{activeTabMeta.description}</p>
+            </div>
           </div>
 
           {/* Tab content */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
+              id={`tab-panel-${activeTab}`}
+              role="tabpanel"
+              aria-live="polite"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}

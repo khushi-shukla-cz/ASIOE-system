@@ -214,7 +214,14 @@
            focus:outline-none focus:ring-2 focus:ring-sage-200 focus:border-sage-400
            transition-all duration-200
            disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-100
-           aria-invalid:border-rose-400 aria-invalid:focus:ring-rose-200;
+  }
+
+  .input-field[aria-invalid='true'] {
+    border-color: #F87171;
+  }
+
+  .input-field[aria-invalid='true']:focus {
+    --tw-ring-color: #FFE0E2;
   }
 
   .input-field:focus-visible {
