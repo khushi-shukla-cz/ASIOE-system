@@ -1,0 +1,48 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  frontend:
+    name: Frontend: typecheck, lint, tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck (tsc)
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Lint (eslint)
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run tests (vitest)
+        working-directory: frontend
+        run: npm run test
