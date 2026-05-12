@@ -19,6 +19,9 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.auth/
 frontend/vite.config.ts.timestamp-*.mjs
 
 # Data (large files)
