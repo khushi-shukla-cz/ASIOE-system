@@ -155,12 +155,18 @@ export default function GapAnalysisView({ gap }: Props) {
         </div>
 
         {/* Radar chart */}
-        <div className="card p-4 col-span-2">
-          <p className="text-xs text-slate-400 uppercase tracking-wide mb-2 font-mono">
+        <div className="card p-4 col-span-2" role="figure" aria-labelledby="radar-title" aria-describedby="radar-summary">
+          <p id="radar-title" className="text-xs text-slate-400 uppercase tracking-wide mb-2 font-mono">
             Domain Coverage Radar
           </p>
-          <ResponsiveContainer width="100%" height={200}>
-            <RadarChart data={radarData}>
+          
+          {/* Screen reader summary of domain coverage */}
+          <p id="radar-summary" className="sr-only">
+            Domain coverage comparison showing candidate skills versus required skills across {gap.domain_coverage.length} domains: {gap.domain_coverage.map(d => `${d.domain.replace('_', ' ')}: ${Math.round(d.radar_value * 100)}% of required`).join('; ')}.
+          </p>
+
+          <ResponsiveContainer width="100%" height={200} aria-label="Radar chart comparing candidate skills to required skills by domain">
+            <RadarChart data={radarData} accessibilityLayer={true}>
               <PolarGrid stroke="#EFF1F5" />
               <PolarAngleAxis
                 dataKey="domain"
@@ -174,6 +180,7 @@ export default function GapAnalysisView({ gap }: Props) {
                 fill="#D8DCE8"
                 fillOpacity={0.2}
                 strokeDasharray="4 2"
+                aria-label="Required skill levels"
               />
               <Radar
                 name="Candidate"
@@ -181,6 +188,7 @@ export default function GapAnalysisView({ gap }: Props) {
                 stroke="#4A8A4A"
                 fill="#4A8A4A"
                 fillOpacity={0.3}
+                aria-label="Candidate skill levels"
               />
               <Tooltip
                 contentStyle={{
