@@ -13,7 +13,7 @@ import LearningPathView from '@/components/dashboard/LearningPathView'
 import SimulationPanel from '@/components/dashboard/SimulationPanel'
 import { formatPercent } from '@/utils/helpers'
 import { readinessColor } from '@/utils/helpers'
-import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+import LoadingSkeleton, { ChartSkeleton, GraphSkeleton } from '@/components/common/LoadingSkeleton'
 
 // Lazy-loaded components for performance optimization
 const SkillGraphD3 = lazy(() => import('@/components/graph/SkillGraphD3'))
@@ -343,7 +343,7 @@ export default function DashboardPage() {
                         <span>Phase ① → ② → ③</span>
                       </div>
                     </div>
-                    <Suspense fallback={<LoadingSkeleton />}>
+                    <Suspense fallback={<GraphSkeleton />}>
                       <SkillGraphD3
                         graph={learning_path.path_graph}
                         onNodeClick={(node) => setActiveTab('explain' as Tab)}
@@ -357,7 +357,7 @@ export default function DashboardPage() {
 
               {activeTab === 'explain' && (
                 reasoning_trace ? (
-                  <Suspense fallback={<LoadingSkeleton />}>
+                  <Suspense fallback={<ChartSkeleton />}>
                     <ExplainabilityConsole trace={reasoning_trace} path={learning_path} />
                   </Suspense>
                 ) : (
