@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense, lazy } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -10,12 +10,14 @@ import { useStore } from '@/store/useStore'
 import SkillProfileView from '@/components/dashboard/SkillProfileView'
 import GapAnalysisView from '@/components/dashboard/GapAnalysisView'
 import LearningPathView from '@/components/dashboard/LearningPathView'
-import SkillGraphD3 from '@/components/graph/SkillGraphD3'
-import ExplainabilityConsole from '@/components/explainability/ExplainabilityConsole'
 import SimulationPanel from '@/components/dashboard/SimulationPanel'
 import { formatPercent } from '@/utils/helpers'
 import { readinessColor } from '@/utils/helpers'
 import LoadingSkeleton from '@/components/common/LoadingSkeleton'
+
+// Lazy-loaded components for performance optimization
+const SkillGraphD3 = lazy(() => import('@/components/graph/SkillGraphD3'))
+const ExplainabilityConsole = lazy(() => import('@/components/explainability/ExplainabilityConsole'))
 
 type Tab = 'profile' | 'gaps' | 'path' | 'graph' | 'explain' | 'simulate'
 
@@ -341,10 +343,12 @@ export default function DashboardPage() {
                         <span>Phase ① → ② → ③</span>
                       </div>
                     </div>
-                    <SkillGraphD3
-                      graph={learning_path.path_graph}
-                      onNodeClick={(node) => setActiveTab('explain' as Tab)}
-                    />
+                    <Suspense fallback={<LoadingSkeleton />}>
+                      <SkillGraphD3
+                        graph={learning_path.path_graph}
+                        onNodeClick={(node) => setActiveTab('explain' as Tab)}
+                      />
+                    </Suspense>
                   </div>
                 ) : (
                   <LoadingSkeleton />
@@ -353,7 +357,9 @@ export default function DashboardPage() {
 
               {activeTab === 'explain' && (
                 reasoning_trace ? (
-                  <ExplainabilityConsole trace={reasoning_trace} path={learning_path} />
+                  <Suspense fallback={<LoadingSkeleton />}>
+                    <ExplainabilityConsole trace={reasoning_trace} path={learning_path} />
+                  </Suspense>
                 ) : (
                   <LoadingSkeleton />
                 )
