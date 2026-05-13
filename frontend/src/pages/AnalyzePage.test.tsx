@@ -12,6 +12,7 @@ vi.mock('react-hot-toast', () => ({
   default: {
     error: vi.fn(),
     success: vi.fn(),
+    loading: vi.fn(),
   },
 }))
 
