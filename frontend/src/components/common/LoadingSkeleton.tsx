@@ -62,6 +62,43 @@ export function GridSkeleton({ columns = 3, count = 6 }: { columns?: number; cou
   )
 }
 
+export function ChartSkeleton() {
+  return (
+    <div className="skeleton-card p-4">
+      <div className="skeleton h-5 w-1/3 mb-4" />
+      <div className="flex items-end gap-3 justify-center h-48">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="flex flex-col items-center flex-1 gap-2">
+            <div
+              className="skeleton w-full rounded-t"
+              style={{ height: `${Math.random() * 60 + 60}px` }}
+            />
+            <div className="skeleton h-3 w-full rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function GraphSkeleton() {
+  return (
+    <div className="skeleton-card p-4 aspect-video">
+      <div className="skeleton h-5 w-1/4 mb-4" />
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="grid grid-cols-5 gap-4 w-2/3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="skeleton rounded-full w-12 h-12" />
+              <div className="skeleton h-3 w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LoadingSkeleton({ children }: { children?: ReactNode }) {
   return children || <CardSkeleton />
 }
