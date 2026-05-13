@@ -74,19 +74,7 @@ export default function AnalyzePage() {
     setIsLoading(true)
     setError(null)
     setLocalProgress(0)
-
-    // Staged progress updates
-    let stageIdx = 0
-    const interval = setInterval(() => {
-      if (stageIdx < PIPELINE_STAGES.length) {
-        const s = PIPELINE_STAGES[stageIdx]
-        setLocalProgress(s.pct)
-        setProgressLabel(s.label)
-        setCurrentEngine(s.engine)
-        setProgress(s.pct, s.label)
-        stageIdx++
-      }
-    }, 1600)
+    const toastId = toast.loading('Analysis started. Preparing pipeline...')
 
     try {
       const result = await runAnalysis(
@@ -95,21 +83,26 @@ export default function AnalyzePage() {
         targetRole || undefined,
         maxModules,
         timeWeeks ? Number(timeWeeks) : undefined,
+        (pct, label) => {
+          const matchedStage = PIPELINE_STAGES.find(stage => stage.pct === pct) || null
+          setLocalProgress(pct)
+          setProgressLabel(label)
+          setCurrentEngine(matchedStage?.engine || label)
+          setProgress(pct, label)
+        }
       )
-      clearInterval(interval)
       setLocalProgress(100)
       setProgressLabel('Analysis complete!')
       setResult(result)
       setSessionId(result.session_id)
-      toast.success('Analysis complete!')
+      toast.success('Analysis complete!', { id: toastId })
       setTimeout(() => navigate('/dashboard'), 600)
     } catch (err: any) {
-      clearInterval(interval)
       setIsLoading(false)
       setLocalProgress(0)
       const errorMessage = err.message || 'Analysis failed. Please try again.'
       setError(errorMessage)
-      toast.error(errorMessage)
+      toast.error(errorMessage, { id: toastId })
     }
   }
 
@@ -402,10 +395,19 @@ export default function AnalyzePage() {
                   `}
                   aria-disabled={!canSubmit}
                 >
-                  {!resumeFile && <AlertCircle size={18} aria-hidden="true" />}
-                  {canSubmit && <Brain size={18} aria-hidden="true" />}
-                  Run Adaptive Analysis
-                  {canSubmit && <ChevronRight size={18} aria-hidden="true" />}
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={18} aria-hidden="true" className="animate-spin" />
+                      Running Adaptive Analysis
+                    </>
+                  ) : (
+                    <>
+                      {!resumeFile && <AlertCircle size={18} aria-hidden="true" />}
+                      {canSubmit && <Brain size={18} aria-hidden="true" />}
+                      Run Adaptive Analysis
+                      {canSubmit && <ChevronRight size={18} aria-hidden="true" />}
+                    </>
+                  )}
                 </button>
                 {!canSubmit && (
                   <p className="text-center text-xs text-slate-400 mt-2">
