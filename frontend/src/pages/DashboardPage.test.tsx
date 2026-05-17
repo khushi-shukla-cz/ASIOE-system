@@ -115,13 +115,13 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('heading', { name: /skill profile/i })).toBeInTheDocument()
     expect(screen.getByText('Mock Skill Profile View')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /gap analysis/i }))
+    await user.click(screen.getAllByRole('tab', { name: /gap analysis/i })[0])
     expect(await screen.findByText('Mock Gap Analysis View')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /learning path/i }))
+    await user.click(screen.getAllByRole('tab', { name: /learning path/i })[0])
     expect(await screen.findByText('Mock Learning Path View')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /simulate/i }))
+    await user.click(screen.getAllByRole('tab', { name: /simulate/i })[0])
     expect(await screen.findByText('Mock Simulation Panel')).toBeInTheDocument()
   })
 })
