@@ -1,5 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
+
+beforeAll(() => {
+  // framer-motion or other libs may call window.scrollTo in jsdom tests
+  // stub it to avoid "Not implemented: window.scrollTo" errors.
+  ;(globalThis as any).scrollTo = vi.fn()
+})
 import ExplainabilityConsole from './ExplainabilityConsole'
 
 const mockTrace = {
@@ -80,5 +87,29 @@ describe('ExplainabilityConsole', () => {
     // detail region should appear
     expect(screen.getByRole('region', { name: /Details for React Basics/i })).toBeInTheDocument()
     expect(screen.getByText(/Covers fundamentals/i)).toBeInTheDocument()
+  })
+
+  it('toggles engine trace with keyboard (Enter)', async () => {
+    render(<ExplainabilityConsole trace={mockTrace as any} path={mockPath as any} />)
+    const parseBtn = screen.getByRole('button', { name: /Parsing Engine/i })
+    expect(parseBtn).toBeInTheDocument()
+
+    // open via Enter
+    parseBtn.focus()
+    await userEvent.keyboard('{Enter}')
+    expect(parseBtn).toHaveAttribute('aria-expanded', 'true')
+
+    // close via Enter again
+    await userEvent.keyboard('{Enter}')
+    expect(parseBtn).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('selects module via keyboard Enter', async () => {
+    render(<ExplainabilityConsole trace={mockTrace as any} path={mockPath as any} />)
+    const firstModule = screen.getByLabelText(/React Basics/)
+    firstModule.focus()
+    await userEvent.keyboard('{Enter}')
+
+    expect(screen.getByRole('region', { name: /Details for React Basics/i })).toBeInTheDocument()
   })
 })
