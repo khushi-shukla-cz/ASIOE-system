@@ -35,7 +35,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    const msg = err.response?.data?.detail || err.message || 'Request failed'
+    const status = err.response?.status
+    const requestUrl = err.config?.url || ''
+    const isAnalyze404 =
+      status === 404 &&
+      requestUrl.includes('/v1/analyze') &&
+      API_BASE_URL === '/api'
+
+    const msg = isAnalyze404
+      ? 'Analysis backend is not configured for this deployment. Set VITE_API_BASE_URL to the backend API origin, for example https://api.your-domain.com/api.'
+      : err.response?.data?.detail || err.message || 'Request failed'
     return Promise.reject(new Error(msg))
   }
 )

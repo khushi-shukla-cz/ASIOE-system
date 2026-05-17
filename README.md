@@ -175,6 +175,18 @@ npm install
 npm run dev                        # http://localhost:5173
 ```
 
+### Frontend deployment config
+
+When deploying the Vite frontend, set `VITE_API_BASE_URL` to the backend API origin.
+
+Example:
+
+```env
+VITE_API_BASE_URL=https://api.your-domain.com/api
+```
+
+If this variable is left at `/api` in a standalone frontend deployment, requests will go to the frontend host and return 404 unless that host also proxies `/api` to the backend.
+
 ---
 
 ## Secret Handling Policy
