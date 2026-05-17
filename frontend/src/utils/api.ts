@@ -2,6 +2,7 @@ import axios, { AxiosHeaders } from 'axios'
 import type { AnalysisResult, SimulationResponse } from '@/types'
 
 const SESSION_TOKEN_STORAGE_KEY = 'asioe_session_token'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export function getSessionToken() {
   return localStorage.getItem(SESSION_TOKEN_STORAGE_KEY)
@@ -16,7 +17,7 @@ export function clearSessionToken() {
 }
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 120_000, // 2 min — LLM inference takes time
 })
 
