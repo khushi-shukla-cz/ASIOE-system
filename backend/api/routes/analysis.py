@@ -39,6 +39,10 @@ from schemas.schemas import (
     SessionStatus,
 )
 from services.analysis_service import get_analysis_service
+try:
+    from workers.tasks import analyze_job
+except Exception:
+    analyze_job = None
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -88,6 +92,7 @@ async def analyze(
     time_constraint_weeks: Optional[int] = Form(default=None),
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
     db: AsyncSession = Depends(get_db),
+    idempotency_key: Optional[str] = Form(default=None, description="Idempotency key for background job"),
 ) -> AnalysisCompleteResponse:
     # Read and validate file size
     file_bytes = await resume.read()
@@ -124,7 +129,21 @@ async def analyze(
         target_role=target_role,
     )
 
-    # Run full pipeline
+    # If an idempotency_key was provided, schedule background work and return 202
+    if idempotency_key and analyze_job is not None:
+        try:
+            analyze_job.delay(session.id, idempotency_key, {'triggered_by_api': True})
+            response.status_code = status.HTTP_202_ACCEPTED
+            response.headers["X-Session-Token"] = issue_session_token(
+                session_id=session.id,
+                user_id=principal.user_id,
+            )
+            return JSONResponse({'session_id': session.id, 'status': 'processing'}, status_code=202)
+        except Exception:
+            # if scheduling fails, fall back to synchronous path
+            pass
+
+    # Run full pipeline (synchronous)
     result = await service.run_analysis(
         db=db,
         session_id=session.id,
