@@ -187,6 +187,18 @@ VITE_API_BASE_URL=https://api.your-domain.com/api
 
 If this variable is left at `/api` in a standalone frontend deployment, requests will go to the frontend host and return 404 unless that host also proxies `/api` to the backend.
 
+CI validation
+
+We added a CI workflow at `.github/workflows/validate-vite-api.yml` that ensures the repository secret `VITE_API_BASE_URL` is set for pull requests. Add the secret in your repository settings (Settings → Secrets → Actions) with the backend origin value, for example `https://api.your-domain.com/api`.
+
+You can run the workflow manually from the GitHub Actions tab or via the `gh` CLI:
+
+```bash
+gh workflow run validate-vite-api.yml --ref master
+```
+
+The workflow also performs an optional health check against `${VITE_API_BASE_URL}/api/health` (informational — it won't fail the job if the health check times out).
+
 ---
 
 ## Secret Handling Policy
