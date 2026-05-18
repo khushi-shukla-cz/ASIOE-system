@@ -1,0 +1,35 @@
+name: Validate VITE_API_BASE_URL
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate-env:
+    runs-on: ubuntu-latest
+    env:
+      API_BASE: ${{ secrets.VITE_API_BASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure VITE_API_BASE_URL is set
+        run: |
+          if [ -z "${API_BASE}" ]; then
+            echo "ERROR: VITE_API_BASE_URL is not set in repository secrets."
+            echo "Set a repo secret named 'VITE_API_BASE_URL' to the backend origin (e.g. https://api.your-domain.com/api)."
+            exit 1
+          fi
+          echo "VITE_API_BASE_URL is set."
+
+      - name: Optional backend health check
+        continue-on-error: true
+        run: |
+          # Construct health URL (strip trailing slash if present)
+          health_url="${API_BASE%/}/api/health"
+          echo "Checking backend health at: $health_url"
+          if curl --fail --silent --show-error --max-time 10 "$health_url" >/dev/null; then
+            echo "Backend health check succeeded."
+          else
+            echo "Warning: backend health check failed or timed out. This step is informational and will not fail the job." 
+          fi
