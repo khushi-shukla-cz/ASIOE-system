@@ -49,6 +49,7 @@ class AnalysisSession(Base):
     )  # pending | processing | completed | failed
 
     resume_filename: Mapped[Optional[str]] = mapped_column(String(255))
+    resume_blob_path: Mapped[Optional[str]] = mapped_column(String(1024))
     jd_text_hash: Mapped[Optional[str]] = mapped_column(String(64))
     target_role: Mapped[Optional[str]] = mapped_column(String(255))
     target_domain: Mapped[Optional[str]] = mapped_column(String(128))

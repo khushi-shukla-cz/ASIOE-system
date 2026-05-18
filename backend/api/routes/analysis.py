@@ -43,6 +43,7 @@ try:
     from workers.tasks import analyze_job
 except Exception:
     analyze_job = None
+from backend.storage import save_upload
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -129,10 +130,24 @@ async def analyze(
         target_role=target_role,
     )
 
+    # Persist uploaded file to durable storage and record path on session
+    try:
+        blob_path = save_upload(session.id, resume.filename or "resume.pdf", file_bytes)
+        # attach path to session record
+        await db.execute(
+            """UPDATE analysis_sessions SET resume_blob_path = :p WHERE id = :id""",
+            {"p": blob_path, "id": session.id},
+        )
+        await db.flush()
+    except Exception:
+        # best-effort persistence; continue without failing the request
+        blob_path = None
+
     # If an idempotency_key was provided, schedule background work and return 202
     if idempotency_key and analyze_job is not None:
         try:
-            analyze_job.delay(session.id, idempotency_key, {'triggered_by_api': True})
+            # pass a lightweight reference: session id and persisted blob path
+            analyze_job.delay(session.id, idempotency_key, {'blob_path': blob_path, 'triggered_by_api': True})
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["X-Session-Token"] = issue_session_token(
                 session_id=session.id,

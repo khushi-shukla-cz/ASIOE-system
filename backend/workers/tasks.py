@@ -19,6 +19,16 @@ def analyze_job(self, session_id: str, idempotency_key: str, payload: dict):
     try:
         # Placeholder for heavy analysis work
         # Replace with real engine orchestration calls
+        # If payload contains a blob_path, load the file as needed
+        blob_path = payload.get('blob_path')
+        if blob_path:
+            try:
+                with open(blob_path, 'rb') as f:
+                    data = f.read()
+                # In production, pass `data` or a reference to the parsing engine
+            except Exception:
+                # proceed; engine should handle missing blobs gracefully
+                data = None
         time.sleep(2)
 
         # Simulate writing results to DB / emitting events
