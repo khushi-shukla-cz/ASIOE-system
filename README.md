@@ -160,6 +160,19 @@ pip install -r requirements.txt
 # Copy and configure env
 cp ../.env.example .env            # Edit with your values
 
+Note for Windows users
+
+The `faiss-cpu` package used for the RAG engine may not have prebuilt wheels for certain Windows/Python combinations. If you see a `No matching distribution` error when running `pip install -r requirements.txt`, either:
+
+- Use Docker (`docker-compose up --build`) to run the full stack (recommended), or
+- Install `faiss` via `conda` from `conda-forge` in your virtual environment:
+
+```bash
+conda install -c conda-forge faiss-cpu
+```
+
+Or, if you are developing on Windows and only need to run the frontend or non-FAISS parts of the backend, the backend `requirements.txt` now skips `faiss-cpu` on Windows automatically.
+
 # Run database migrations
 # (ensure PostgreSQL and Neo4j are running locally)
 

@@ -18,7 +18,8 @@ redis==5.0.7
 neo4j==5.22.0
 
 # Vector Store
-faiss-cpu==1.8.0
+# faiss-cpu wheels are not available for some Windows Python builds; skip on Windows
+faiss-cpu==1.8.0; sys_platform != "win32"
 numpy==1.26.4
 
 # ML / NLP Stack
