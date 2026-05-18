@@ -25,7 +25,7 @@
     "framer-motion": "^11.3.8",
     "recharts": "^2.12.7",
     "d3": "^7.9.0",
-    "react-dropzone": "^14.2.3",
+    "react-dropzone": "^15.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.407.0",
     "react-hot-toast": "^2.4.1"
