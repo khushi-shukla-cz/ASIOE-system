@@ -63,7 +63,7 @@ opentelemetry-exporter-jaeger-thrift==1.24.0
 opentelemetry-exporter-prometheus==0.45b0
 opentelemetry-instrumentation-fastapi==0.45b0
 opentelemetry-instrumentation-sqlalchemy==0.45b0
-opentelemetry-instrumentation-redis==0.45b0
+opentelemetry-instrumentation-redis==0.62b1
 opentelemetry-instrumentation-requests==0.45b0
 
 # Async Utilities
