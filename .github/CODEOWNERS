@@ -1,0 +1,8 @@
+# Default code owners
+* @khushi-shukla-cz
+
+# Backend owners
+/backend/ @khushi-shukla-cz
+
+# Frontend owners
+/frontend/ @khushi-shukla-cz
