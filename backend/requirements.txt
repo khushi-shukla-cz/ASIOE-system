@@ -64,7 +64,7 @@ opentelemetry-exporter-prometheus==0.45b0
 opentelemetry-instrumentation-fastapi==0.45b0
 opentelemetry-instrumentation-sqlalchemy==0.45b0
 opentelemetry-instrumentation-redis==0.45b0
-opentelemetry-instrumentation-requests==0.45b0
+opentelemetry-instrumentation-requests==0.62b1
 
 # Async Utilities
 aiofiles==23.2.1
