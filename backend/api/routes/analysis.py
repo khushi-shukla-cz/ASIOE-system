@@ -15,6 +15,7 @@ import math
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
+from pydantic import ValidationError
 
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
@@ -113,14 +114,19 @@ async def analyze(
         file_bytes=file_bytes,
     )
 
-    # Build request object
-    request = AnalyzeRequest(
-        jd_text=jd_text,
-        target_role=target_role,
-        priority_mode=priority_mode,
-        max_modules=max_modules,
-        time_constraint_weeks=time_constraint_weeks,
-    )
+    # Build request object and validate using Pydantic schema
+    try:
+        request = AnalyzeRequest(
+            jd_text=jd_text,
+            target_role=target_role,
+            priority_mode=priority_mode,
+            max_modules=max_modules,
+            time_constraint_weeks=time_constraint_weeks,
+        )
+    except ValidationError as ve:
+        # Log and return structured validation errors
+        logger.warning("analyze.request.validation_failed", user_id=principal.user_id, errors=ve.errors())
+        raise HTTPException(status_code=422, detail={"validation_errors": ve.errors()})
 
     # Create session
     service = get_analysis_service()
@@ -147,7 +153,23 @@ async def analyze(
 
     # If an idempotency_key was provided, schedule background work and return 202
     if idempotency_key and analyze_job is not None:
+        idem_cache_key = build_cache_key("idempotency", idempotency_key)
         try:
+            # If we've seen this idempotency key before, return the existing session
+            existing = await cache_get(idem_cache_key)
+            if existing and isinstance(existing, dict):
+                existing_session_id = existing.get("session_id")
+                # fetch status from DB
+                result = await db.execute(select(AnalysisSession).where(AnalysisSession.id == existing_session_id))
+                existing_session = result.scalar_one_or_none()
+                status_str = existing_session.status if existing_session else "unknown"
+                response.status_code = status.HTTP_200_OK
+                response.headers["X-Session-Token"] = issue_session_token(session_id=existing_session_id or session.id, user_id=principal.user_id)
+                return JSONResponse({'session_id': existing_session_id, 'status': status_str}, status_code=200)
+
+            # persist idempotency mapping before scheduling to prevent duplicates
+            await cache_set(idem_cache_key, {"session_id": session.id, "created_at": datetime.now(timezone.utc).isoformat()}, ttl=60 * 60 * 24 * 7)
+
             # pass a lightweight reference: session id and persisted blob path
             analyze_job.delay(session.id, idempotency_key, {'blob_path': blob_path, 'triggered_by_api': True})
             response.status_code = status.HTTP_202_ACCEPTED
@@ -157,8 +179,12 @@ async def analyze(
             )
             return JSONResponse({'session_id': session.id, 'status': 'processing'}, status_code=202)
         except Exception:
-            # if scheduling fails, fall back to synchronous path but log for observability
+            # if scheduling fails, remove idempotency mapping and fall back to synchronous path
             logger.exception("failed to schedule background analyze job", session_id=session.id, idempotency_key=idempotency_key)
+            try:
+                await cache_delete(idem_cache_key)
+            except Exception:
+                logger.exception("failed to remove idempotency mapping after scheduling failure", session_id=session.id, idempotency_key=idempotency_key)
 
     # Run full pipeline (synchronous)
     result = await service.run_analysis(
