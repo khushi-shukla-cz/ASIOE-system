@@ -30,7 +30,7 @@ from core.auth import (
 )
 from core.config import settings
 from core.security import validate_uploaded_document
-from db.cache import build_cache_key, cache_get, cache_set, get_cache_metrics
+from db.cache import build_cache_key, cache_get, cache_set, cache_delete, get_cache_metrics
 from db.database import get_db
 from db.models import AnalysisSession, AuditLog, GapAnalysis, LearningPath, SkillProfile
 from schemas.schemas import (
@@ -147,18 +147,45 @@ async def analyze(
 
     # If an idempotency_key was provided, schedule background work and return 202
     if idempotency_key and analyze_job is not None:
+        idem_cache_key = build_cache_key("idempotency", idempotency_key)
         try:
+            # if we've already created a session for this idempotency key, return it
+            existing = await cache_get(idem_cache_key)
+            if existing and isinstance(existing, dict):
+                existing_session_id = existing.get("session_id")
+                # try to fetch session status
+                try:
+                    result = await db.execute(select(AnalysisSession).where(AnalysisSession.id == existing_session_id))
+                    existing_session = result.scalar_one_or_none()
+                    status_val = existing_session.status if existing_session else "unknown"
+                except Exception:
+                    status_val = "unknown"
+
+                response.status_code = status.HTTP_200_OK
+                response.headers["X-Session-Token"] = issue_session_token(session_id=existing_session_id or session.id, user_id=principal.user_id)
+                logger.info("analyze.idempotency.hit", idempotency_key=idempotency_key, session_id=existing_session_id)
+                return JSONResponse({"session_id": existing_session_id, "status": status_val}, status_code=200)
+
+            # persist idempotency mapping before scheduling to avoid races
+            await cache_set(idem_cache_key, {"session_id": session.id, "created_at": datetime.now(timezone.utc).isoformat()}, ttl=60 * 60 * 24 * 7)
+            logger.info("analyze.idempotency.set", idempotency_key=idempotency_key, session_id=session.id)
+
             # pass a lightweight reference: session id and persisted blob path
-            analyze_job.delay(session.id, idempotency_key, {'blob_path': blob_path, 'triggered_by_api': True})
+            analyze_job.delay(session.id, idempotency_key, {"blob_path": blob_path, "triggered_by_api": True})
             response.status_code = status.HTTP_202_ACCEPTED
             response.headers["X-Session-Token"] = issue_session_token(
                 session_id=session.id,
                 user_id=principal.user_id,
             )
-            return JSONResponse({'session_id': session.id, 'status': 'processing'}, status_code=202)
+            logger.info("analyze.job.scheduled", session_id=session.id, idempotency_key=idempotency_key)
+            return JSONResponse({"session_id": session.id, "status": "processing"}, status_code=202)
         except Exception:
-            # if scheduling fails, fall back to synchronous path but log for observability
+            # if scheduling fails, remove mapping and fall back to synchronous path
             logger.exception("failed to schedule background analyze job", session_id=session.id, idempotency_key=idempotency_key)
+            try:
+                await cache_delete(idem_cache_key)
+            except Exception:
+                logger.exception("failed to remove idempotency mapping after scheduling failure", session_id=session.id, idempotency_key=idempotency_key)
 
     # Run full pipeline (synchronous)
     result = await service.run_analysis(

@@ -185,7 +185,7 @@ def test_post_analyze_rejects_invalid_upload_type(monkeypatch):
         )
 
     assert response.status_code == 422
-    assert 'Unsupported file type' in response.json()['detail']
+    assert 'Unsupported file type' in response.json().get('message', '')
 
 
 def test_post_analyze_rejects_oversized_upload(monkeypatch):
@@ -210,7 +210,7 @@ def test_post_analyze_rejects_oversized_upload(monkeypatch):
         )
 
     assert response.status_code == 413
-    assert 'File too large' in response.json()['detail']
+    assert 'File too large' in response.json().get('message', '')
 
 
 def test_post_analyze_rejects_near_empty_upload(monkeypatch):
@@ -234,7 +234,7 @@ def test_post_analyze_rejects_near_empty_upload(monkeypatch):
         )
 
     assert response.status_code == 422
-    assert 'empty or corrupted' in response.json()['detail']
+    assert 'empty or corrupted' in response.json().get('message', '')
 
 
 def test_post_analyze_rejects_invalid_pdf_payload(monkeypatch):
@@ -258,7 +258,7 @@ def test_post_analyze_rejects_invalid_pdf_payload(monkeypatch):
         )
 
     assert response.status_code == 422
-    assert 'valid PDF' in response.json()['detail']
+    assert 'valid PDF' in response.json().get('message', '')
 
 
 def test_get_results_uses_cached_payload(monkeypatch):
@@ -285,7 +285,7 @@ def test_get_results_requires_session_token_without_global_auth(monkeypatch):
         response = client.get('/api/v1/results/s1')
 
     assert response.status_code == 401
-    assert 'X-Session-Token header is required' in response.json()['detail']
+    assert 'X-Session-Token header is required' in response.json().get('message', '')
 
 
 def test_get_results_requires_session_token_when_auth_enabled(monkeypatch):
@@ -303,7 +303,7 @@ def test_get_results_requires_session_token_when_auth_enabled(monkeypatch):
         )
 
     assert response.status_code == 401
-    assert 'X-Session-Token header is required' in response.json()['detail']
+    assert 'X-Session-Token header is required' in response.json().get('message', '')
 
 
 def test_get_graph_requires_session_token_when_auth_enabled(monkeypatch):
@@ -321,7 +321,7 @@ def test_get_graph_requires_session_token_when_auth_enabled(monkeypatch):
         )
 
     assert response.status_code == 401
-    assert 'X-Session-Token header is required' in response.json()['detail']
+    assert 'X-Session-Token header is required' in response.json().get('message', '')
 
 
 def test_get_explain_requires_session_token_when_auth_enabled(monkeypatch):
@@ -339,7 +339,7 @@ def test_get_explain_requires_session_token_when_auth_enabled(monkeypatch):
         )
 
     assert response.status_code == 401
-    assert 'X-Session-Token header is required' in response.json()['detail']
+    assert 'X-Session-Token header is required' in response.json().get('message', '')
 
 
 def test_post_simulate_recomputes_path(monkeypatch):
