@@ -39,6 +39,7 @@ from schemas.schemas import (
     SessionResponse,
     SessionStatus,
 )
+from core.errors import InfraDependencyError
 from services.analysis_service import get_analysis_service
 try:
     from workers.tasks import analyze_job
@@ -218,10 +219,15 @@ async def get_session(
 ) -> SessionResponse:
     del principal
 
-    result = await db.execute(
-        select(AnalysisSession).where(AnalysisSession.id == session_id)
-    )
-    session = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(AnalysisSession).where(AnalysisSession.id == session_id)
+        )
+        session = result.scalar_one_or_none()
+    except Exception as e:
+        logger.exception("db.query.failed", session_id=session_id, error=str(e))
+        raise InfraDependencyError("Failed to query session from database", details={"error": str(e)})
+
     if not session:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
 
@@ -265,10 +271,15 @@ async def get_results(
         return JSONResponse(content=cached)
 
     # Check session exists
-    result = await db.execute(
-        select(AnalysisSession).where(AnalysisSession.id == session_id)
-    )
-    session = result.scalar_one_or_none()
+    try:
+        result = await db.execute(
+            select(AnalysisSession).where(AnalysisSession.id == session_id)
+        )
+        session = result.scalar_one_or_none()
+    except Exception as e:
+        logger.exception("db.query.failed", session_id=session_id, error=str(e))
+        raise InfraDependencyError("Failed to query session from database", details={"error": str(e)})
+
     if not session:
         raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
     if session.status == SessionStatus.PROCESSING:
@@ -504,12 +515,16 @@ async def get_metrics(
 ) -> Dict[str, Any]:
     del principal
 
-    result = await db.execute(
-        select(AuditLog)
-        .where(AuditLog.session_id == session_id)
-        .order_by(AuditLog.timestamp)
-    )
-    logs = result.scalars().all()
+    try:
+        result = await db.execute(
+            select(AuditLog)
+            .where(AuditLog.session_id == session_id)
+            .order_by(AuditLog.timestamp)
+        )
+        logs = result.scalars().all()
+    except Exception as e:
+        logger.exception("db.query.failed", session_id=session_id, error=str(e))
+        raise InfraDependencyError("Failed to query metrics from database", details={"error": str(e)})
 
     if not logs:
         raise HTTPException(status_code=404, detail="No metrics found for session")
