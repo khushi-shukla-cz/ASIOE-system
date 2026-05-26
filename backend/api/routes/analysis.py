@@ -168,7 +168,10 @@ async def analyze(
                 return JSONResponse({"session_id": existing_session_id, "status": status_val}, status_code=200)
 
             # persist idempotency mapping before scheduling to avoid races
-            await cache_set(idem_cache_key, {"session_id": session.id, "created_at": datetime.now(timezone.utc).isoformat()}, ttl=60 * 60 * 24 * 7)
+            mapping_value = {"session_id": session.id, "created_at": datetime.now(timezone.utc).isoformat()}
+            if blob_path:
+                mapping_value["blob_path"] = blob_path
+            await cache_set(idem_cache_key, mapping_value, ttl=60 * 60 * 24 * 7)
             logger.info("analyze.idempotency.set", idempotency_key=idempotency_key, session_id=session.id)
 
             # pass a lightweight reference: session id and persisted blob path

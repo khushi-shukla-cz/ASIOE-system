@@ -21,6 +21,26 @@ def analyze_job(self, session_id: str, idempotency_key: str, payload: dict):
         # Replace with real engine orchestration calls
         # If payload contains a blob_path, load the file as needed
         blob_path = payload.get('blob_path')
+        # If blob_path not provided, attempt to read idempotency mapping from Redis
+        if not blob_path:
+            try:
+                import os, redis, json
+
+                redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+                r = redis.from_url(redis_url)
+                idem_key = f"asioe:idempotency:{idempotency_key}"
+                raw = r.get(idem_key)
+                if raw:
+                    try:
+                        if isinstance(raw, bytes):
+                            raw = raw.decode('utf-8')
+                        parsed = json.loads(raw)
+                        blob_path = parsed.get('blob_path')
+                    except Exception:
+                        blob_path = None
+            except Exception:
+                blob_path = None
+
         if blob_path:
             try:
                 with open(blob_path, 'rb') as f:
