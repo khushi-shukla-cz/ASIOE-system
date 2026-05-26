@@ -12,6 +12,7 @@ GET  /api/v1/metrics/{id}     — Get session performance metrics
 from __future__ import annotations
 
 import math
+import json
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -141,6 +142,7 @@ async def analyze(
         await db.flush()
     except Exception:
         # best-effort persistence; continue without failing the request
+        logger.exception("failed to persist uploaded resume", session_id=session.id, filename=resume.filename)
         blob_path = None
 
     # If an idempotency_key was provided, schedule background work and return 202
@@ -155,8 +157,8 @@ async def analyze(
             )
             return JSONResponse({'session_id': session.id, 'status': 'processing'}, status_code=202)
         except Exception:
-            # if scheduling fails, fall back to synchronous path
-            pass
+            # if scheduling fails, fall back to synchronous path but log for observability
+            logger.exception("failed to schedule background analyze job", session_id=session.id, idempotency_key=idempotency_key)
 
     # Run full pipeline (synchronous)
     result = await service.run_analysis(
@@ -223,6 +225,16 @@ async def get_results(
     cache_key = build_cache_key("analysis", session_id)
     cached = await cache_get(cache_key)
     if cached:
+        # cached may be stored as JSON string from older versions; accept both dict and JSON
+        if isinstance(cached, (str, bytes)):
+            try:
+                if isinstance(cached, bytes):
+                    cached = cached.decode('utf-8')
+                cached = json.loads(cached)
+            except Exception:
+                logger.exception("failed to parse cached analysis result", session_id=session_id)
+                raise HTTPException(status_code=500, detail="Corrupt cached analysis result")
+
         return JSONResponse(content=cached)
 
     # Check session exists
@@ -267,7 +279,8 @@ async def get_results(
         )
 
     reconstructed = _reconstruct_response(session, profile, gap, path, logs)
-    await cache_set(cache_key, reconstructed.model_dump(mode="json"), ttl=settings.CACHE_TTL_SECONDS)
+    # store as a dict to allow consumers to .get(...) without JSON decoding
+    await cache_set(cache_key, reconstructed.model_dump(), ttl=settings.CACHE_TTL_SECONDS)
     return reconstructed
 
 
@@ -361,6 +374,16 @@ async def get_explanations(
     if not cached:
         raise HTTPException(status_code=404, detail="Analysis results not found")
 
+    # cached may be a JSON string from older versions; normalize to dict
+    if isinstance(cached, (str, bytes)):
+        try:
+            if isinstance(cached, bytes):
+                cached = cached.decode('utf-8')
+            cached = json.loads(cached)
+        except Exception:
+            logger.exception("failed to parse cached analysis for explanations", session_id=session_id)
+            raise HTTPException(status_code=500, detail="Corrupt cached analysis result")
+
     # Extract explainability data from cached result
     learning_path = cached.get("learning_path", {})
     gap_analysis = cached.get("gap_analysis", {})
@@ -409,6 +432,16 @@ async def get_graph(
     cached = await cache_get(cache_key)
     if not cached:
         raise HTTPException(status_code=404, detail="Analysis results not found")
+
+    # normalize legacy JSON cached payloads to dict
+    if isinstance(cached, (str, bytes)):
+        try:
+            if isinstance(cached, bytes):
+                cached = cached.decode('utf-8')
+            cached = json.loads(cached)
+        except Exception:
+            logger.exception("failed to parse cached analysis for graph", session_id=session_id)
+            raise HTTPException(status_code=500, detail="Corrupt cached analysis result")
 
     path = cached.get("learning_path", {})
     gap = cached.get("gap_analysis", {})
