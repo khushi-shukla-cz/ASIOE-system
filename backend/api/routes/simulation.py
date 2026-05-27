@@ -41,7 +41,6 @@ async def simulate(
     principal: AuthenticatedPrincipal = Depends(get_current_principal),
     x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
 ) -> Dict[str, Any]:
-    del principal
 
     # Validate session token against requested session_id when provided
     if not x_session_token:
