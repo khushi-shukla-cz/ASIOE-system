@@ -51,13 +51,29 @@ async def close_redis() -> None:
 async def cache_get(key: str) -> Optional[Any]:
     client = await get_redis()
     value = await client.get(key)
-    if value:
+    if value is not None:
         _cache_stats["hits"] += 1
-        parsed = json.loads(value)
+        # Be defensive: stored values may be JSON strings or double-encoded JSON.
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            # Not JSON — return raw value as-is (legacy behaviour)
+            return value
+
+        # Unwrap one level of double-encoded JSON if necessary.
+        unwrap_attempts = 0
+        while isinstance(parsed, str) and unwrap_attempts < 2:
+            try:
+                parsed = json.loads(parsed)
+                unwrap_attempts += 1
+            except json.JSONDecodeError:
+                break
+
         if isinstance(parsed, dict):
             maybe_saved_ms = parsed.get("processing_time_ms")
             if isinstance(maybe_saved_ms, (int, float)):
                 _cache_stats["estimated_saved_processing_ms"] += float(maybe_saved_ms)
+
         return parsed
 
     _cache_stats["misses"] += 1
