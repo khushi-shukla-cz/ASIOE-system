@@ -1,0 +1,335 @@
+
+=================================== ERRORS ====================================
+____________ ERROR collecting backend/tests/test_api_contracts.py _____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_api_contracts.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_api_contracts.py:30: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+___________ ERROR collecting backend/tests/test_api_integration.py ____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_api_integration.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_api_integration.py:30: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+_________________ ERROR collecting backend/tests/test_auth.py _________________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_auth.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_auth.py:6: in <module>
+    from core.auth import get_current_principal, issue_session_token, require_session_access, verify_session_token
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+____________ ERROR collecting backend/tests/test_cache_metrics.py _____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_cache_metrics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_cache_metrics.py:3: in <module>
+    from db import cache as cache_module
+backend\db\__init__.py:1: in <module>
+    from db import models  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^
+backend\db\models.py:26: in <module>
+    from db.database import Base
+backend\db\database.py:20: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+________ ERROR collecting backend/tests/test_explainability_engine.py _________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_explainability_engine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_explainability_engine.py:7: in <module>
+    from engines.explainability.explainability_engine import ExplainabilityEngine
+backend\engines\explainability\explainability_engine.py:25: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+______________ ERROR collecting backend/tests/test_gap_engine.py ______________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_gap_engine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_gap_engine.py:1: in <module>
+    from engines.gap.gap_engine import GAP_SEVERITY_THRESHOLDS, GapAnalysisEngine
+backend\engines\gap\gap_engine.py:22: in <module>
+    from sklearn.metrics.pairwise import cosine_similarity
+E   ModuleNotFoundError: No module named 'sklearn'
+________ ERROR collecting backend/tests/test_idempotency_and_cache.py _________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_idempotency_and_cache.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_idempotency_and_cache.py:8: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+____________ ERROR collecting backend/tests/test_metrics_route.py _____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_metrics_route.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_metrics_route.py:18: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+_______ ERROR collecting backend/tests/test_normalization_boundaries.py _______
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_normalization_boundaries.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_normalization_boundaries.py:7: in <module>
+    from engines.normalization.normalization_engine import NormalizationEngine
+backend\engines\normalization\normalization_engine.py:21: in <module>
+    from sklearn.metrics.pairwise import cosine_similarity
+E   ModuleNotFoundError: No module named 'sklearn'
+_________ ERROR collecting backend/tests/test_normalization_engine.py _________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_normalization_engine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_normalization_engine.py:3: in <module>
+    from engines.normalization.normalization_engine import (
+backend\engines\normalization\normalization_engine.py:21: in <module>
+    from sklearn.metrics.pairwise import cosine_similarity
+E   ModuleNotFoundError: No module named 'sklearn'
+____________ ERROR collecting backend/tests/test_observability.py _____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_observability.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_observability.py:9: in <module>
+    from core.observability import (
+backend\core\observability.py:33: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+___________ ERROR collecting backend/tests/test_parsing_fallback.py ___________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_parsing_fallback.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_parsing_fallback.py:5: in <module>
+    from engines.parsing.parsing_engine import LLMExtractor, ParsingEngine
+backend\engines\parsing\parsing_engine.py:27: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+__________ ERROR collecting backend/tests/test_parsing_validation.py __________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_parsing_validation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_parsing_validation.py:1: in <module>
+    from engines.parsing.parsing_engine import ParsingEngine
+backend\engines\parsing\parsing_engine.py:27: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+___________ ERROR collecting backend/tests/test_path_boundaries.py ____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_path_boundaries.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_path_boundaries.py:9: in <module>
+    from engines.path.path_engine import PathEngine
+E   ImportError: cannot import name 'PathEngine' from 'engines.path.path_engine' (unknown location)
+_____________ ERROR collecting backend/tests/test_path_engine.py ______________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_path_engine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_path_engine.py:11: in <module>
+    from engines.path.path_engine import AdaptivePathEngine
+backend\engines\path\path_engine.py:33: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+______________ ERROR collecting backend/tests/test_rag_engine.py ______________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_rag_engine.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_rag_engine.py:32: in <module>
+    from engines.rag.rag_engine import CourseDocument, RAGEngine
+E   ImportError: cannot import name 'CourseDocument' from 'engines.rag.rag_engine' (unknown location)
+______________ ERROR collecting backend/tests/test_resilience.py ______________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_resilience.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_resilience.py:6: in <module>
+    from core.resilience import run_with_resilience
+backend\core\resilience.py:10: in <module>
+    from tenacity import AsyncRetrying, RetryCallState, retry_if_exception_type, stop_after_attempt, stop_after_delay, wait_exponential_jitter
+E   ModuleNotFoundError: No module named 'tenacity'
+___________ ERROR collecting backend/tests/test_results_fallback.py ___________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_results_fallback.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_results_fallback.py:20: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+_________ ERROR collecting backend/tests/test_security_middleware.py __________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_security_middleware.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_security_middleware.py:6: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+___________ ERROR collecting backend/tests/test_simulation_route.py ___________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_simulation_route.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_simulation_route.py:18: in <module>
+    from api.routes import simulation as simulation_route
+backend\api\routes\simulation.py:14: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+_____________ ERROR collecting backend/tests/test_workflow_e2e.py _____________
+ImportError while importing test module 'C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_workflow_e2e.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\..\..\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend\tests\test_workflow_e2e.py:30: in <module>
+    from api.routes import analysis as analysis_route
+backend\api\routes\analysis.py:25: in <module>
+    from core.auth import (
+backend\core\auth.py:12: in <module>
+    from core.config import settings
+backend\core\config.py:14: in <module>
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+E   ModuleNotFoundError: No module named 'pydantic_settings'
+============================== warnings summary ===============================
+backend\tests\test_gap_boundaries.py:17
+  C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_gap_boundaries.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+backend\tests\test_gap_boundaries.py:74
+  C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_gap_boundaries.py:74: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+backend\tests\test_gap_boundaries.py:161
+  C:\Users\Khushi\OneDrive\Desktop\projects\asioe v2\backend\tests\test_gap_boundaries.py:161: PytestUnknownMarkWarning: Unknown pytest.mark.asyncio - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.asyncio
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR backend/tests/test_api_contracts.py
+ERROR backend/tests/test_api_integration.py
+ERROR backend/tests/test_auth.py
+ERROR backend/tests/test_cache_metrics.py
+ERROR backend/tests/test_explainability_engine.py
+ERROR backend/tests/test_gap_engine.py
+ERROR backend/tests/test_idempotency_and_cache.py
+ERROR backend/tests/test_metrics_route.py
+ERROR backend/tests/test_normalization_boundaries.py
+ERROR backend/tests/test_normalization_engine.py
+ERROR backend/tests/test_observability.py
+ERROR backend/tests/test_parsing_fallback.py
+ERROR backend/tests/test_parsing_validation.py
+ERROR backend/tests/test_path_boundaries.py
+ERROR backend/tests/test_path_engine.py
+ERROR backend/tests/test_rag_engine.py
+ERROR backend/tests/test_resilience.py
+ERROR backend/tests/test_results_fallback.py
+ERROR backend/tests/test_security_middleware.py
+ERROR backend/tests/test_simulation_route.py
+ERROR backend/tests/test_workflow_e2e.py
+!!!!!!!!!!!!!!!!!! Interrupted: 21 errors during collection !!!!!!!!!!!!!!!!!!!
+3 warnings, 21 errors in 3.62s

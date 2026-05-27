@@ -253,3 +253,6 @@ def get_normalization_engine() -> SkillNormalizationEngine:
     if _normalization_engine is None:
         _normalization_engine = SkillNormalizationEngine()
     return _normalization_engine
+
+# Backwards-compatible export expected by tests and other modules
+NormalizationEngine = SkillNormalizationEngine

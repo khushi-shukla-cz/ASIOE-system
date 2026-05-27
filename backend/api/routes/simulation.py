@@ -15,6 +15,7 @@ from core.auth import (
     AuthenticatedPrincipal,
     get_current_principal,
     require_session_access,
+    verify_session_token,
 )
 from core.config import settings
 from db.cache import build_cache_key, cache_get, cache_set
@@ -37,9 +38,15 @@ router = APIRouter()
 )
 async def simulate(
     request: SimulationRequest,
-    principal: AuthenticatedPrincipal = Depends(require_session_access),
+    principal: AuthenticatedPrincipal = Depends(get_current_principal),
+    x_session_token: str | None = Header(default=None, alias="X-Session-Token"),
 ) -> Dict[str, Any]:
     del principal
+
+    # Validate session token against requested session_id when provided
+    if not x_session_token:
+        raise HTTPException(status_code=401, detail="X-Session-Token header is required")
+    verify_session_token(x_session_token, session_id=request.session_id, user_id=principal.user_id)
 
     # Load cached analysis results
     cache_key = build_cache_key("analysis", request.session_id)

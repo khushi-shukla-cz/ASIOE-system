@@ -533,3 +533,6 @@ def get_path_engine() -> AdaptivePathEngine:
     if _path_engine is None:
         _path_engine = AdaptivePathEngine()
     return _path_engine
+
+# Backwards-compatible export expected by tests and other modules
+PathEngine = AdaptivePathEngine

@@ -64,8 +64,13 @@ def verify_session_token(token: str, session_id: str, user_id: str) -> None:
     if payload.get("sid") != session_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match requested session")
 
-    if payload.get("sub") != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
+    # Only enforce strict user matching when API auth is enabled.
+    # In development/testing modes (`AUTH_ENABLED=False`) the system issues
+    # session tokens without requiring an `X-User-Id` header; allow the
+    # token's subject to be used in that case.
+    if settings.AUTH_ENABLED:
+        if payload.get("sub") != user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
 
 
 def get_current_principal(
