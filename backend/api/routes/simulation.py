@@ -104,9 +104,12 @@ async def simulate(
                 if m.module_id not in request.exclude_module_ids
             ]
 
-    # Cache the simulation result under a different key
+    # Cache the simulation result under a different key (best-effort)
     sim_key = build_cache_key("simulation", request.session_id, str(request.time_constraint_weeks))
-    await cache_set(sim_key, new_path.model_dump(), ttl=1800)
+    try:
+        await cache_set(sim_key, new_path.model_dump(), ttl=1800)
+    except Exception as e:  # pragma: no cover - defensive: allow tests to run without Redis
+        logger.warning("simulation.cache_set_failed", error=str(e), key=sim_key)
 
     original_phases: List[Dict[str, Any]] = cached.get("learning_path", {}).get("phases", [])
     original_module_count = sum(len(phase.get("modules", [])) for phase in original_phases)
