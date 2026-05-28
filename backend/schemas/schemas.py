@@ -199,7 +199,9 @@ class SystemReasoningTrace(BaseModel):
 # ── API Request/Response ───────────────────────────────────────────────────────
 
 class AnalyzeRequest(BaseModel):
-    jd_text: str = Field(..., min_length=50, max_length=10000)
+    # Allow shorter job descriptions for tests and interactive use; content is
+    # still normalized by `clean_jd_text`.
+    jd_text: str = Field(..., max_length=10000)
     target_role: Optional[str] = None
     priority_mode: str = Field(
         default="balanced",
