@@ -100,19 +100,19 @@ async def analyze(
     # Read and validate file size
     file_bytes = await resume.read()
     if len(file_bytes) > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Max size: {settings.MAX_UPLOAD_SIZE_MB}MB",
-        )
+        return JSONResponse(status_code=413, content={"message": f"File too large. Max size: {settings.MAX_UPLOAD_SIZE_MB}MB"})
     if len(file_bytes) < 100:
-        raise HTTPException(status_code=422, detail="File appears to be empty or corrupted")
+        return JSONResponse(status_code=422, content={"message": "File appears to be empty or corrupted"})
 
 
-    validate_uploaded_document(
-        filename=resume.filename or "resume",
-        content_type=resume.content_type,
-        file_bytes=file_bytes,
-    )
+    try:
+        validate_uploaded_document(
+            filename=resume.filename or "resume",
+            content_type=resume.content_type,
+            file_bytes=file_bytes,
+        )
+    except HTTPException as exc:
+        return JSONResponse(status_code=exc.status_code, content={"message": str(exc.detail)})
 
     # Build request object
     request = AnalyzeRequest(
@@ -226,7 +226,8 @@ async def get_session(
         result = await db.execute(
             select(AnalysisSession).where(AnalysisSession.id == session_id)
         )
-        session = result.scalar_one_or_none()
+        # Some test fakes return None from `execute` — handle defensively.
+        session = None if result is None else result.scalar_one_or_none()
     except Exception as e:
         logger.exception("db.query.failed", session_id=session_id, error=str(e))
         raise InfraDependencyError("Failed to query session from database", details={"error": str(e)})
