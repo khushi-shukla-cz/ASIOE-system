@@ -62,15 +62,11 @@ def verify_session_token(token: str, session_id: str, user_id: str) -> None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session token expired")
 
     if payload.get("sid") != session_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match requested session")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Session token does not match requested session"})
 
-    # Only enforce strict user matching when API auth is enabled.
-    # In development/testing modes (`AUTH_ENABLED=False`) the system issues
-    # session tokens without requiring an `X-User-Id` header; allow the
-    # token's subject to be used in that case.
-    if settings.AUTH_ENABLED:
-        if payload.get("sub") != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
+    # Always enforce user matching for issued session tokens.
+    if payload.get("sub") != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Session token user mismatch"})
 
 
 def get_current_principal(
@@ -82,10 +78,10 @@ def get_current_principal(
     if settings.AUTH_ENABLED:
         allowed_keys = {k.strip() for k in settings.API_AUTH_KEYS.split(",") if k.strip()}
         if not x_api_key or x_api_key not in allowed_keys:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"message": "Invalid API key"})
 
         if not user_id:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Id header is required")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"message": "X-User-Id header is required"})
     else:
         user_id = user_id or settings.DEFAULT_AUTH_USER
 
@@ -100,7 +96,7 @@ def require_session_access(
     if not x_session_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="X-Session-Token header is required",
+            detail={"message": "X-Session-Token header is required"},
         )
 
     verify_session_token(x_session_token, session_id=session_id, user_id=principal.user_id)
