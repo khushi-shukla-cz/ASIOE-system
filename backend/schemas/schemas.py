@@ -176,9 +176,12 @@ class LearningPathResult(BaseModel):
 
 class NodeExplanation(BaseModel):
     node_id: str
-    skill_name: str
-    why_included: str
-    dependency_chain: List[str]
+    # Historically the engine used `skill_name`; tests construct with
+    # `skill_id` — accept both and keep `skill_name` optional for backwards compatibility.
+    skill_id: Optional[str] = None
+    skill_name: Optional[str] = None
+    why_included: str = ""
+    dependency_chain: List[str] = []
     confidence_score: float
     importance_rank: int
     gap_contribution: float
