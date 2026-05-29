@@ -279,7 +279,7 @@ async def get_results(
         result = await db.execute(
             select(AnalysisSession).where(AnalysisSession.id == session_id)
         )
-        session = result.scalar_one_or_none()
+        session = None if result is None else result.scalar_one_or_none()
     except Exception as e:
         logger.exception("db.query.failed", session_id=session_id, error=str(e))
         raise InfraDependencyError("Failed to query session from database", details={"error": str(e)})
