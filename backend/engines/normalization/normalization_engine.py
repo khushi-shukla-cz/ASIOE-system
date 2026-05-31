@@ -21,7 +21,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from core.config import settings
-from engines.instrumentation import trace_engine_operation
+from engines.instrumentation import trace_engine_operation, MetricsRecorder
 
 logger = structlog.get_logger(__name__)
 
@@ -81,8 +81,23 @@ class SkillNormalizationEngine:
     def _load_model(self) -> SentenceTransformer:
         if self._model is None:
             logger.info("normalization.model.loading", model=settings.EMBEDDING_MODEL)
-            self._model = SentenceTransformer(settings.EMBEDDING_MODEL)
-            logger.info("normalization.model.loaded")
+            # Respect debug mode: do not instantiate heavy models in quick CI/dev runs
+            if getattr(settings, "NORMALIZATION_DEBUG_MODE", False):
+                logger.info("normalization.model.skipped_in_debug_mode")
+                # Use a lightweight stand-in that mimics the interface used here
+                class _DummyModel:
+                    def encode(self, texts, **kwargs):
+                        # Return deterministic small embeddings for tests
+                        import numpy as _np
+
+                        if isinstance(texts, (list, tuple)):
+                            return _np.zeros((len(texts), settings.EMBEDDING_DIMENSION))
+                        return _np.zeros((1, settings.EMBEDDING_DIMENSION))
+
+                self._model = _DummyModel()  # type: ignore
+            else:
+                self._model = SentenceTransformer(settings.EMBEDDING_MODEL)
+                logger.info("normalization.model.loaded")
         return self._model
 
     def _load_ontology(self) -> SkillOntology:
@@ -162,8 +177,10 @@ class SkillNormalizationEngine:
             )
             return skill_id, best_score
 
-        # Pass 3: No match — generate a synthetic skill_id
-        synthetic_id = f"custom_{skill_name.lower().replace(' ', '_')}"
+        # Pass 3: No match — generate a synthetic skill_id using slug helper
+        from utils.strings import slugify_skill
+
+        synthetic_id = f"custom_{slugify_skill(skill_name)}"
         logger.debug("normalization.no_match", skill=skill_name, best_score=best_score)
         return synthetic_id, best_score
 
@@ -177,13 +194,20 @@ class SkillNormalizationEngine:
         Deduplicates by canonical_id, keeping highest confidence.
         """
         seen: Dict[str, Dict] = {}
+        recorder = MetricsRecorder("normalization")
+        total_latency_ms = 0.0
+        processed_count = 0
 
         for skill in skills:
             name = skill.get("name", "")
             if not name:
                 continue
 
+            import time
+
+            start = time.time()
             skill_id, conf = self.normalize_skill(name, skill.get("domain"))
+            total_latency_ms += (time.time() - start) * 1000.0
 
             normalized = {
                 **skill,
@@ -195,10 +219,18 @@ class SkillNormalizationEngine:
             existing = seen.get(skill_id)
             if existing is None:
                 seen[skill_id] = normalized
+            processed_count += 1
             elif conf > existing.get("normalization_confidence", 0):
                 seen[skill_id] = normalized
 
         result = list(seen.values())
+        # Record batch metrics for normalization operation
+        recorder.record_batch(
+            operation="normalize_skill_list",
+            count=processed_count or len(skills),
+            total_latency_ms=total_latency_ms,
+            success=True,
+        )
         logger.info(
             "normalization.complete",
             input_count=len(skills),
