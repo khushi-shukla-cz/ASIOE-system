@@ -180,6 +180,8 @@ class NodeExplanation(BaseModel):
     # `skill_id` — accept both and keep `skill_name` optional for backwards compatibility.
     skill_id: Optional[str] = None
     skill_name: Optional[str] = None
+    # New field expected by tests: `reasoning` (human readable justification)
+    reasoning: str = ""
     why_included: str = ""
     dependency_chain: List[str] = []
     confidence_score: float
