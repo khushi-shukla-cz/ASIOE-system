@@ -82,7 +82,7 @@ class SkillNormalizationEngine:
         if self._model is None:
             logger.info("normalization.model.loading", model=settings.EMBEDDING_MODEL)
             # Respect debug mode: do not instantiate heavy models in quick CI/dev runs
-            if getattr(settings, "NORMALIZATION_DEBUG_MODE", False):
+            if settings.NORMALIZATION_DEBUG_MODE:
                 logger.info("normalization.model.skipped_in_debug_mode")
                 # Use a lightweight stand-in that mimics the interface used here
                 class _DummyModel:
@@ -219,9 +219,10 @@ class SkillNormalizationEngine:
             existing = seen.get(skill_id)
             if existing is None:
                 seen[skill_id] = normalized
+            else:
+                if conf > existing.get("normalization_confidence", 0):
+                    seen[skill_id] = normalized
             processed_count += 1
-            elif conf > existing.get("normalization_confidence", 0):
-                seen[skill_id] = normalized
 
         result = list(seen.values())
         # Record batch metrics for normalization operation
