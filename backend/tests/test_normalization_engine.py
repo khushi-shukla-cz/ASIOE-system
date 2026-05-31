@@ -1,3 +1,19 @@
+from __future__ import annotations
+
+from engines.normalization import get_normalization_engine
+from core.config import settings
+
+
+def test_normalization_engine_debug_mode():
+    # Ensure debug mode uses dummy model and returns normalized ids for known ontology
+    settings.NORMALIZATION_DEBUG_MODE = True
+    engine = get_normalization_engine()
+
+    skills = [{"name": "Python"}, {"name": "SQL"}, {"name": "Unknown Skill"}]
+    result = engine.normalize_skill_list(skills)
+
+    assert any(r["canonical_skill_id"] == "python" for r in result)
+    assert any(r["canonical_skill_id"] == "sql" for r in result)
 import numpy as np
 
 from engines.normalization.normalization_engine import (
