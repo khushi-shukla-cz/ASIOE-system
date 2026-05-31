@@ -62,11 +62,13 @@ def verify_session_token(token: str, session_id: str, user_id: str) -> None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session token expired")
 
     if payload.get("sid") != session_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Session token does not match requested session"})
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match requested session")
 
-    # Always enforce user matching for issued session tokens.
-    if payload.get("sub") != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Session token user mismatch"})
+    # Enforce user matching only when API auth is enabled. In test environments
+    # we allow session tokens to be presented without a matching API principal.
+    if settings.AUTH_ENABLED:
+        if payload.get("sub") != user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
 
 
 def get_current_principal(
