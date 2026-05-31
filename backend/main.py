@@ -195,7 +195,11 @@ def create_app() -> FastAPI:
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException):
         code = ErrorCode.VALIDATION_ERROR if 400 <= exc.status_code < 500 else ErrorCode.INTERNAL_ERROR
-        message = str(exc.detail) if exc.detail else "HTTP request failed"
+        # Unwrap structured detail payloads where tests raise HTTPException(detail={"message": ...})
+        if isinstance(exc.detail, dict) and "message" in exc.detail:
+            message = exc.detail.get("message")
+        else:
+            message = str(exc.detail) if exc.detail else "HTTP request failed"
         return build_error_response(
             request=request,
             status_code=exc.status_code,
