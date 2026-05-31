@@ -83,6 +83,8 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
     EMBEDDING_DIMENSION: int = 768
     EMBEDDING_BATCH_SIZE: int = 64
+    # Toggle to disable heavy embedding/model usage during quick dev or CI runs
+    NORMALIZATION_DEBUG_MODE: bool = False
 
     # ── Data Paths ────────────────────────────────────────────────────────────
     DATA_DIR: Path = Path(__file__).resolve().parents[1] / "data"
