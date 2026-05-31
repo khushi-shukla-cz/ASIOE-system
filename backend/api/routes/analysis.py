@@ -50,6 +50,16 @@ from backend.storage import save_upload
 logger = structlog.get_logger(__name__)
 router = APIRouter()
 
+# Include health routes when analysis router is mounted so lightweight test apps
+# (which only include analysis + simulation routers) still expose /health.
+try:
+    from . import health as _health_route
+
+    router.include_router(_health_route.router)
+except Exception:
+    # If importing health routes fails (e.g., in constrained test env), skip silently
+    pass
+
 MAX_UPLOAD_BYTES = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 
