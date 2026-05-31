@@ -18,3 +18,4 @@ celery -A workers.celery_app.app worker --loglevel=info
 
 Normalization engine note:
 - Set `NORMALIZATION_DEBUG_MODE=true` in `.env` to avoid loading large embedding models during quick CI or development runs.
+- Try the sample CLI: `python backend/scripts/normalize_sample.py Python JS "Machine Learning"` to see normalization results locally.
