@@ -140,3 +140,8 @@ class MetricsRecorder:
             total_latency_ms=total_latency_ms,
             avg_latency_ms=avg_latency_ms,
         )
+
+
+def create_metrics_recorder(engine_name: str) -> MetricsRecorder:
+    """Factory helper for creating a MetricsRecorder for an engine."""
+    return MetricsRecorder(engine_name)
