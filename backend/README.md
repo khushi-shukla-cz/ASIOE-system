@@ -15,3 +15,6 @@ celery -A workers.celery_app.app worker --loglevel=info
 
 3. API usage (async scheduling):
 - POST `/api/v1/analyze` with form `idempotency_key` to schedule background work. Uploaded resume is saved under `backend/uploads/{session_id}/` and the worker receives a lightweight `blob_path` reference.
+
+Normalization engine note:
+- Set `NORMALIZATION_DEBUG_MODE=true` in `.env` to avoid loading large embedding models during quick CI or development runs.
