@@ -1,3 +1,22 @@
+# Contributing
+
+Small guide for contributors: run tests, format code, and open PRs.
+
+Run tests locally:
+
+```
+backend\.venv\Scripts\activate.bat  # Windows
+source backend/.venv/bin/activate     # Unix
+python -m pytest backend -q
+```
+
+Run formatter:
+
+```
+black .
+```
+
+Please follow the project's coding standards and add tests for new features.
 # Contributing to ASIOE
 
 Thanks for wanting to contribute! Please follow these guidelines to make your PRs easier to review.
