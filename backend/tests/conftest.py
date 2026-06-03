@@ -290,3 +290,43 @@ if not _has_module("opentelemetry"):
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
+
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def dummy_db():
+	class _DB:
+		async def execute(self, _stmt):
+			return None
+
+		async def scalar_one_or_none(self):
+			return None
+
+	return _DB()
+
+
+@pytest.fixture
+def test_app(dummy_db):
+	"""Build a lightweight FastAPI app used by contract tests."""
+	from api.routes import analysis as analysis_route
+	from api.routes import simulation as simulation_route
+
+	app = FastAPI()
+	app.include_router(analysis_route.router, prefix="/api/v1")
+	app.include_router(simulation_route.router, prefix="/api/v1")
+
+	async def _override_db():
+		yield dummy_db
+
+	app.dependency_overrides[analysis_route.get_db] = _override_db
+	return app
+
+
+@pytest.fixture
+def client(test_app):
+	with TestClient(test_app) as c:
+		yield c

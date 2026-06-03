@@ -36,6 +36,7 @@ backend/data/processed/*.bin
 
 # Uploads
 /tmp/asioe_uploads/
+backend/uploads/
 
 # IDE
 .vscode/
