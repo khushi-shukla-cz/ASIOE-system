@@ -1,3 +1,10 @@
+## Description
+Describe the changes made and why.
+
+## Checklist
+- [ ] Tests added or updated
+- [ ] Documentation updated
+- [ ] Lint checks pass
 <!-- Describe your changes and why they are needed. -->
 ## Summary
 
