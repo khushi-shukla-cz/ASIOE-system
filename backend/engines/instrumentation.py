@@ -80,6 +80,7 @@ class MetricsRecorder:
     def record_operation(
         self,
         operation: str,
+        operation: str,
         latency_ms: float,
         success: bool = True,
         error_type: Optional[str] = None,
