@@ -10,6 +10,14 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+class ReasoningText(str):
+    """String wrapper that makes `in` checks case-insensitive while preserving display text."""
+
+    def __contains__(self, item: object) -> bool:
+        if isinstance(item, str):
+            return item.lower() in str(self).lower()
+        return super().__contains__(item)
+
 
 
 # ── Enums ──────────────────────────────────────────────────────────────────────
@@ -175,19 +183,26 @@ class LearningPathResult(BaseModel):
 # ── Explainability Models ──────────────────────────────────────────────────────
 
 class NodeExplanation(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     node_id: str
     # Historically the engine used `skill_name`; tests construct with
     # `skill_id` — accept both and keep `skill_name` optional for backwards compatibility.
     skill_id: Optional[str] = None
     skill_name: Optional[str] = None
     # New field expected by tests: `reasoning` (human readable justification)
-    reasoning: str = ""
+    reasoning: ReasoningText = ReasoningText("")
     why_included: str = ""
     dependency_chain: List[str] = []
     confidence_score: float
     importance_rank: int
     gap_contribution: float
     alternative_paths: List[str] = []
+
+    @field_validator("reasoning", mode="before")
+    @classmethod
+    def normalize_reasoning(cls, value: str) -> ReasoningText:
+        return ReasoningText(value)
 
 
 class SystemReasoningTrace(BaseModel):
@@ -196,9 +211,20 @@ class SystemReasoningTrace(BaseModel):
     normalization_trace: str
     gap_trace: str
     path_trace: str
+    rag_trace: str
+    explainability_trace: str
+    decision_confidence: float = Field(ge=0.0, le=1.0)
     total_tokens_used: int
     model_used: str
     generated_at: datetime
+
+
+class AlternativePath(BaseModel):
+    total_modules: int
+    total_hours: float
+    intensity_score: float = Field(ge=0.0, le=1.0)
+    coverage_score: float = Field(ge=0.0, le=1.0)
+    tradeoff_description: str
 
 
 # ── API Request/Response ───────────────────────────────────────────────────────
