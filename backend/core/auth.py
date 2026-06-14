@@ -64,11 +64,35 @@ def verify_session_token(token: str, session_id: str, user_id: str) -> None:
     if payload.get("sid") != session_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match requested session")
 
-    # Enforce user matching only when API auth is enabled. In test environments
-    # we allow session tokens to be presented without a matching API principal.
-    if settings.AUTH_ENABLED:
-        if payload.get("sub") != user_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
+    if payload.get("sub") != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token user mismatch")
+
+
+def _verify_session_token_session_only(token: str, session_id: str) -> None:
+    """Relaxed token validation for routes when AUTH_ENABLED is False.
+
+    Validates signature, payload shape, expiry, and session id without enforcing
+    the token subject against the caller principal.
+    """
+    try:
+        payload_segment, signature_segment = token.split(".", 1)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session token") from exc
+
+    expected_signature = _sign(payload_segment)
+    if not hmac.compare_digest(signature_segment, expected_signature):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid session token signature")
+
+    try:
+        payload = json.loads(_b64url_decode(payload_segment).decode("utf-8"))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Malformed session token payload") from exc
+
+    if int(payload.get("exp", 0)) < int(time.time()):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session token expired")
+
+    if payload.get("sid") != session_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session token does not match requested session")
 
 
 def get_current_principal(
@@ -101,6 +125,9 @@ def require_session_access(
             detail={"message": "X-Session-Token header is required"},
         )
 
-    verify_session_token(x_session_token, session_id=session_id, user_id=principal.user_id)
+    if settings.AUTH_ENABLED:
+        verify_session_token(x_session_token, session_id=session_id, user_id=principal.user_id)
+    else:
+        _verify_session_token_session_only(x_session_token, session_id=session_id)
 
     return principal

@@ -89,12 +89,15 @@ class NormalizedSkill(BaseModel):
 class SkillGap(BaseModel):
     skill_id: str
     skill_name: str
-    domain: SkillDomain
+    domain: SkillDomain = SkillDomain.TECHNICAL
     severity: GapSeverity
-    current_score: float = Field(ge=0.0, le=1.0, description="Candidate's current level")
-    required_score: float = Field(ge=0.0, le=1.0, description="Role requirement level")
-    gap_delta: float
-    reasoning: str
+    current_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Candidate's current level")
+    required_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Role requirement level")
+    gap_delta: float = 0.0
+    reasoning: str = ""
+    gap_type: Optional[str] = None
+    jd_proficiency_required: Optional[float] = None
+    candidate_proficiency: Optional[float] = None
 
 
 class DomainCoverage(BaseModel):
@@ -106,16 +109,18 @@ class DomainCoverage(BaseModel):
 
 
 class GapAnalysisResult(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     session_id: str
-    overall_readiness_score: float = Field(ge=0.0, le=1.0)
-    readiness_label: str
+    overall_readiness_score: float = Field(default=0.0, ge=0.0, le=1.0, alias="readiness_score")
+    readiness_label: str = ""
     critical_gaps: List[SkillGap]
     major_gaps: List[SkillGap]
     minor_gaps: List[SkillGap]
-    strength_areas: List[Dict[str, Any]]
+    strength_areas: List[Dict[str, Any]] = []
     domain_coverage: List[DomainCoverage]
     reasoning_trace: str
-    analysis_timestamp: datetime
+    analysis_timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 # ── Learning Path Models ───────────────────────────────────────────────────────

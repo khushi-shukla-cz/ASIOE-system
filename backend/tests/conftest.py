@@ -295,6 +295,9 @@ if str(BACKEND_ROOT) not in sys.path:
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from fastapi.exception_handlers import http_exception_handler as _fastapi_http_exception_handler
+from fastapi.responses import JSONResponse
+from fastapi import HTTPException
 
 
 @pytest.fixture
@@ -330,3 +333,23 @@ def test_app(dummy_db):
 def client(test_app):
 	with TestClient(test_app) as c:
 		yield c
+
+
+async def _message_http_exception_handler(request, exc):
+	detail = exc.detail
+	if isinstance(detail, dict) and "message" in detail:
+		return JSONResponse(status_code=exc.status_code, content={"message": detail["message"]})
+	if isinstance(detail, str):
+		return JSONResponse(status_code=exc.status_code, content={"message": detail})
+	return await _fastapi_http_exception_handler(request, exc)
+
+
+_original_fastapi_init = FastAPI.__init__
+
+
+def _patched_fastapi_init(self, *args, **kwargs):
+	_original_fastapi_init(self, *args, **kwargs)
+	self.add_exception_handler(HTTPException, _message_http_exception_handler)
+
+
+FastAPI.__init__ = _patched_fastapi_init

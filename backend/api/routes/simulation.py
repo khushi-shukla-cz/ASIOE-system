@@ -15,6 +15,7 @@ from core.auth import (
     AuthenticatedPrincipal,
     get_current_principal,
     require_session_access,
+    _verify_session_token_session_only,
     verify_session_token,
 )
 from core.config import settings
@@ -45,7 +46,10 @@ async def simulate(
     # Validate session token against requested session_id when provided
     if not x_session_token:
         raise HTTPException(status_code=401, detail="X-Session-Token header is required")
-    verify_session_token(x_session_token, session_id=request.session_id, user_id=principal.user_id)
+    if settings.AUTH_ENABLED:
+        verify_session_token(x_session_token, session_id=request.session_id, user_id=principal.user_id)
+    else:
+        _verify_session_token_session_only(x_session_token, session_id=request.session_id)
 
     # Load cached analysis results
     cache_key = build_cache_key("analysis", request.session_id)
